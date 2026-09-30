@@ -11,10 +11,8 @@ namespace Maps
     public sealed class MapNavigationController
     {
         // Eased motion below these thresholds snaps to rest, so an idle map stops dirtying the UI.
-        const float RestingPanSpeed = 0.5f;
-        const float RestingLogZoomDelta = 1e-4f;
-
-        static readonly Vector2 MapCenter = new Vector2(0.5f, 0.5f);
+        const float k_RestingPanSpeed = 0.5f;
+        const float k_RestingLogZoomDelta = 1e-4f;
 
         readonly MapViewportModel _model;
         readonly IMapViewportSpace _viewportSpace;
@@ -58,7 +56,7 @@ namespace Maps
         public void ResetView()
         {
             _model.SetZoom(_settings.Zoom.DefaultZoom, Vector2.zero);
-            _model.CenterOn(MapCenter);
+            _model.CenterOn(MapUtil.NormalizedCenter);
             Stop();
         }
 
@@ -67,7 +65,7 @@ namespace Maps
             deltaTime = Mathf.Max(0f, deltaTime);
 
             bool hasPointer = TryGetPointer(input, out Vector2 pointer);
-            bool pointerAccepted = !_settings.RequirePointerOverMap || (hasPointer && IsInsideViewport(pointer));
+            bool pointerAccepted = !_settings.RequirePointerOverMap || (hasPointer && MapUtil.ContainsCentered(_model.ViewportSize, pointer));
 
             UpdateDrag(input, hasPointer, pointer, pointerAccepted);
             UpdateDirectionalPan(input.Pan, deltaTime);
@@ -108,8 +106,8 @@ namespace Maps
             // By default the stick moves the view, so the map itself moves the opposite way.
             Vector2 targetVelocity = Vector2.ClampMagnitude(direction, 1f) * (pan.Invert ? speed : -speed);
 
-            _panVelocity = Vector2.Lerp(_panVelocity, targetVelocity, EaseFactor(pan.SmoothTime, deltaTime));
-            if (targetVelocity == Vector2.zero && _panVelocity.sqrMagnitude < RestingPanSpeed * RestingPanSpeed)
+            _panVelocity = Vector2.Lerp(_panVelocity, targetVelocity, MapUtil.SmoothingFactor(pan.SmoothTime, deltaTime));
+            if (targetVelocity == Vector2.zero && _panVelocity.sqrMagnitude < k_RestingPanSpeed * k_RestingPanSpeed)
                 _panVelocity = Vector2.zero;
 
             if (_panVelocity != Vector2.zero)
@@ -129,7 +127,7 @@ namespace Maps
             if (input.ZoomSteps != 0f && pointerAccepted)
             {
                 _targetZoom *= Mathf.Pow(zoom.StepMultiplier, input.ZoomSteps);
-                _zoomPivot = zoom.ZoomTowardsPointer && hasPointer ? ClampToViewport(pointer) : Vector2.zero;
+                _zoomPivot = zoom.ZoomTowardsPointer && hasPointer ? MapUtil.ClampCentered(_model.ViewportSize, pointer) : Vector2.zero;
             }
 
             _targetZoom = _model.ClampZoom(_targetZoom);
@@ -142,32 +140,14 @@ namespace Maps
             return input.HasPointer && _viewportSpace.TryScreenToViewport(input.PointerPosition, out viewportPosition);
         }
 
-        bool IsInsideViewport(Vector2 point)
-        {
-            Vector2 halfSize = _model.ViewportSize * 0.5f;
-            return Mathf.Abs(point.x) <= halfSize.x && Mathf.Abs(point.y) <= halfSize.y;
-        }
-
-        Vector2 ClampToViewport(Vector2 point)
-        {
-            Vector2 halfSize = _model.ViewportSize * 0.5f;
-            return Vector2.Max(-halfSize, Vector2.Min(halfSize, point));
-        }
-
-        // Zoom eases in log space so zooming in and out feel symmetrical.
+        // Zoom eases in log space so zooming in and out feel symmetrical, then snaps once it is close enough.
         static float EaseZoom(float current, float target, float smoothTime, float deltaTime)
         {
-            float t = EaseFactor(smoothTime, deltaTime);
-            float logCurrent = Mathf.Log(current);
-            float logTarget = Mathf.Log(target);
-            if (t >= 1f || Mathf.Abs(logTarget - logCurrent) < RestingLogZoomDelta)
+            float t = MapUtil.SmoothingFactor(smoothTime, deltaTime);
+            if (t >= 1f || Mathf.Abs(Mathf.Log(target) - Mathf.Log(current)) < k_RestingLogZoomDelta)
                 return target;
 
-            return Mathf.Exp(Mathf.Lerp(logCurrent, logTarget, t));
+            return MapUtil.LerpLog(current, target, t);
         }
-
-        // Frame-rate independent exponential ease: covers ~63% of the remaining distance every smoothTime.
-        static float EaseFactor(float smoothTime, float deltaTime) =>
-            smoothTime > 0f ? 1f - Mathf.Exp(-deltaTime / smoothTime) : 1f;
     }
 }

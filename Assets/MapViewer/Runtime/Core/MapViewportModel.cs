@@ -15,8 +15,6 @@ namespace Maps
         /// <summary>Lowest zoom limit accepted, so the map can never collapse to nothing.</summary>
         public const float MinimumZoom = 0.01f;
 
-        static readonly Vector2 MapCenter = new Vector2(0.5f, 0.5f);
-
         Vector2 _viewportSize;
         float _contentAspect = 1f;
         MapFitMode _fitMode = MapFitMode.Fit;
@@ -102,7 +100,7 @@ namespace Maps
             float clamped = ClampZoom(zoom);
             float ratio = clamped / Zoom;
             Zoom = clamped;
-            Pan = ClampPan(pivot - (pivot - Pan) * ratio);
+            Pan = ClampPan(MapUtil.ScaleOffsetAroundPivot(Pan, pivot, ratio));
         }
 
         /// <summary>Moves the map by <paramref name="delta"/>, stopping at its edges.</summary>
@@ -110,27 +108,20 @@ namespace Maps
 
         /// <summary>Brings a map point as close to the viewport center as the map's edges allow.</summary>
         public void CenterOn(Vector2 normalizedPoint) =>
-            Pan = ClampPan(-Vector2.Scale(normalizedPoint - MapCenter, ContentSize));
+            Pan = ClampPan(-Vector2.Scale(normalizedPoint - MapUtil.NormalizedCenter, ContentSize));
 
         /// <summary>Converts a normalized map point to viewport space.</summary>
         public Vector2 NormalizedToViewport(Vector2 normalizedPoint) =>
-            Pan + Vector2.Scale(normalizedPoint - MapCenter, ContentSize);
+            MapUtil.NormalizedToLocal(normalizedPoint, Pan, ContentSize);
 
         /// <summary>Converts a point in viewport space to a normalized map point.</summary>
-        public Vector2 ViewportToNormalized(Vector2 viewportPoint)
-        {
-            Vector2 size = ContentSize;
-            if (size.x <= 0f || size.y <= 0f)
-                return MapCenter;
-
-            Vector2 offset = viewportPoint - Pan;
-            return new Vector2(offset.x / size.x, offset.y / size.y) + MapCenter;
-        }
+        public Vector2 ViewportToNormalized(Vector2 viewportPoint) =>
+            MapUtil.LocalToNormalized(viewportPoint, Pan, ContentSize);
 
         void UpdateBaseContentSize()
         {
             Vector2 previous = BaseContentSize;
-            BaseContentSize = CalculateBaseContentSize(_viewportSize, _contentAspect, _fitMode);
+            BaseContentSize = MapUtil.FitSize(_viewportSize, _contentAspect, _fitMode);
 
             // Rescale the offset so the same map point stays centered, e.g. across a resolution change.
             Vector2 pan = Pan;
@@ -139,26 +130,6 @@ namespace Maps
             Pan = ClampPan(pan);
         }
 
-        Vector2 ClampPan(Vector2 pan)
-        {
-            Vector2 overflow = (ContentSize - _viewportSize) * 0.5f;
-            return new Vector2(ClampAxis(pan.x, overflow.x), ClampAxis(pan.y, overflow.y));
-        }
-
-        // A map smaller than the viewport along an axis stays centered on that axis.
-        static float ClampAxis(float value, float overflow) =>
-            overflow > 0f ? Mathf.Clamp(value, -overflow, overflow) : 0f;
-
-        static Vector2 CalculateBaseContentSize(Vector2 viewportSize, float contentAspect, MapFitMode fitMode)
-        {
-            if (viewportSize.x <= 0f || viewportSize.y <= 0f)
-                return Vector2.zero;
-
-            float viewportAspect = viewportSize.x / viewportSize.y;
-            bool matchWidth = contentAspect > viewportAspect == (fitMode == MapFitMode.Fit);
-            return matchWidth
-                ? new Vector2(viewportSize.x, viewportSize.x / contentAspect)
-                : new Vector2(viewportSize.y * contentAspect, viewportSize.y);
-        }
+        Vector2 ClampPan(Vector2 pan) => MapUtil.ClampOffset(pan, ContentSize, _viewportSize);
     }
 }

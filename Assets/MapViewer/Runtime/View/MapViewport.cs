@@ -34,12 +34,9 @@ namespace Maps
         {
             get
             {
-                Sprite sprite = mapImage != null ? mapImage.sprite : null;
-                if (sprite != null && sprite.rect.height > 0f)
-                    return sprite.rect.width / sprite.rect.height;
-
                 Vector2 size = Size;
-                return size.y > 0f ? size.x / size.y : 1f;
+                float viewportAspect = size.y > 0f ? size.x / size.y : 1f;
+                return MapUtil.GetAspect(mapImage != null ? mapImage.sprite : null, viewportAspect);
             }
         }
 
@@ -81,28 +78,7 @@ namespace Maps
                 content.localScale = scale;
         }
 
-        public bool TryScreenToViewport(Vector2 screenPosition, out Vector2 viewportPosition)
-        {
-            RectTransform rectTransform = RectTransform;
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    rectTransform, screenPosition, GetEventCamera(), out Vector2 localPosition))
-            {
-                viewportPosition = default;
-                return false;
-            }
-
-            viewportPosition = localPosition - rectTransform.rect.center;
-            return true;
-        }
-
-        Camera GetEventCamera()
-        {
-            Canvas canvas = GetComponentInParent<Canvas>();
-            if (canvas == null)
-                return null;
-
-            Canvas rootCanvas = canvas.rootCanvas;
-            return rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : rootCanvas.worldCamera;
-        }
+        public bool TryScreenToViewport(Vector2 screenPosition, out Vector2 viewportPosition) =>
+            MapUtil.TryScreenToCenteredLocal(RectTransform, screenPosition, out viewportPosition);
     }
 }
