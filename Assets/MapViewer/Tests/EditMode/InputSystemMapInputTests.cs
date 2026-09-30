@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace Maps.Tests
         static readonly string[] ActionNames = { "Pan", "Zoom", "ZoomStep", "Drag", "Point" };
 
         readonly List<Object> _createdObjects = new List<Object>();
+        readonly List<InputSystemMapInput> _inputs = new List<InputSystemMapInput>();
         InputActionAsset _controls;
         InputSystemMapInput _input;
         Gamepad _gamepad;
@@ -26,25 +28,34 @@ namespace Maps.Tests
 
             // A copy of the shipped asset tests the real bindings without mutating the asset itself.
             _controls = Track(Object.Instantiate(AssetDatabase.LoadAssetAtPath<InputActionAsset>(ControlsPath)));
-            _input = Track(new GameObject("Map Input")).AddComponent<InputSystemMapInput>();
+            _input = CreateInput();
+        }
 
-            var serializedInput = new SerializedObject(_input);
+        public override void TearDown()
+        {
+            foreach (InputSystemMapInput input in _inputs)
+                input.Disable();
+            _inputs.Clear();
+            foreach (Object createdObject in _createdObjects)
+                Object.DestroyImmediate(createdObject);
+            _createdObjects.Clear();
+            base.TearDown();
+        }
+
+        InputSystemMapInput CreateInput()
+        {
+            var input = Track(new GameObject("Map Input")).AddComponent<InputSystemMapInput>();
+            var serializedInput = new SerializedObject(input);
             foreach (string actionName in ActionNames)
             {
                 string field = char.ToLowerInvariant(actionName[0]) + actionName.Substring(1);
                 InputAction action = _controls.FindAction($"Map/{actionName}", throwIfNotFound: true);
                 serializedInput.FindProperty(field).objectReferenceValue = Track(InputActionReference.Create(action));
             }
-            serializedInput.ApplyModifiedPropertiesWithoutUndo();
-        }
 
-        public override void TearDown()
-        {
-            _input.Disable();
-            foreach (Object createdObject in _createdObjects)
-                Object.DestroyImmediate(createdObject);
-            _createdObjects.Clear();
-            base.TearDown();
+            serializedInput.ApplyModifiedPropertiesWithoutUndo();
+            _inputs.Add(input);
+            return input;
         }
 
         T Track<T>(T createdObject) where T : Object
@@ -87,6 +98,24 @@ namespace Maps.Tests
             foreach (InputAction action in sharedMap.actions)
                 Assert.That(action.enabled, Is.True, action.name);
             sharedMap.Disable();
+        }
+
+        [Test]
+        public void Disable_WhileAnotherViewerUsesTheActions_KeepsThemRunningUntilBothAreDisabled()
+        {
+            InputSystemMapInput otherViewerInput = CreateInput();
+            _input.Enable();
+            otherViewerInput.Enable();
+            InputActionMap sharedMap = _controls.FindActionMap("Map");
+
+            _input.Disable();
+            bool stillRunningForOtherViewer = sharedMap.actions.All(action => action.enabled);
+            otherViewerInput.Disable();
+
+            Assert.That(stillRunningForOtherViewer, Is.True);
+            Assert.That(_input.ReadFrame().HasPointer, Is.False, "a disabled input reads nothing");
+            foreach (InputAction action in sharedMap.actions)
+                Assert.That(action.enabled, Is.False, action.name);
         }
 
         [Test]

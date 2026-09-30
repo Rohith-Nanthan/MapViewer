@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,13 +10,16 @@ namespace Maps
     /// </summary>
     /// <remarks>
     /// <see cref="Enable"/> and <see cref="Disable"/> switch every referenced action on or off. Actions are
-    /// only live while this component is enabled too, so disabling it never leaves them running. It only
-    /// ever disables actions it enabled itself, so viewers sharing an actions asset do not cut each other off.
+    /// only live while this component is enabled too, so disabling it never leaves them running. Actions are
+    /// reference counted, so viewers that share an actions asset never switch each other's input off.
     /// </remarks>
     [AddComponentMenu("Map Viewer/Input System Map Input")]
     [DisallowMultipleComponent]
     public sealed class InputSystemMapInput : MonoBehaviour, IMapInput
     {
+        // How many map inputs currently use each action. An action stays enabled while anything uses it.
+        static readonly Dictionary<InputAction, int> s_ActionUsers = new Dictionary<InputAction, int>();
+
         [Tooltip("Directional pan (Vector2), e.g. left stick and D-pad.")]
         [SerializeField] InputActionReference pan;
 
@@ -31,6 +35,7 @@ namespace Maps
         [Tooltip("Pointer position in screen pixels (Vector2), used to drag and to zoom towards the cursor.")]
         [SerializeField] InputActionReference point;
 
+        readonly List<InputAction> _acquiredActions = new List<InputAction>();
         bool _requested;
 
         public bool IsEnabled { get; private set; }
@@ -39,14 +44,13 @@ namespace Maps
         {
             _requested = true;
             if (enabled && gameObject.activeInHierarchy)
-                SetActionsEnabled(true);
+                AcquireActions();
         }
 
         public void Disable()
         {
             _requested = false;
-            if (IsEnabled)
-                SetActionsEnabled(false);
+            ReleaseActions();
         }
 
         public MapInputFrame ReadFrame()
@@ -73,36 +77,58 @@ namespace Maps
         void OnEnable()
         {
             if (_requested)
-                SetActionsEnabled(true);
+                AcquireActions();
         }
 
-        void OnDisable()
+        void OnDisable() => ReleaseActions();
+
+        void AcquireActions()
         {
             if (IsEnabled)
-                SetActionsEnabled(false);
-        }
-
-        void SetActionsEnabled(bool value)
-        {
-            SetEnabled(pan, value);
-            SetEnabled(zoom, value);
-            SetEnabled(zoomStep, value);
-            SetEnabled(drag, value);
-            SetEnabled(point, value);
-            IsEnabled = value;
-        }
-
-        static void SetEnabled(InputActionReference reference, bool value)
-        {
-            InputAction action = Resolve(reference);
-            if (action == null)
                 return;
 
-            if (value)
-                action.Enable();
-            else
-                action.Disable();
+            Acquire(pan);
+            Acquire(zoom);
+            Acquire(zoomStep);
+            Acquire(drag);
+            Acquire(point);
+            IsEnabled = true;
         }
+
+        void Acquire(InputActionReference reference)
+        {
+            InputAction action = Resolve(reference);
+            if (action == null || _acquiredActions.Contains(action))
+                return;
+
+            _acquiredActions.Add(action);
+            s_ActionUsers.TryGetValue(action, out int users);
+            s_ActionUsers[action] = users + 1;
+            action.Enable();
+        }
+
+        void ReleaseActions()
+        {
+            foreach (InputAction action in _acquiredActions)
+            {
+                s_ActionUsers.TryGetValue(action, out int users);
+                if (users > 1)
+                {
+                    s_ActionUsers[action] = users - 1;
+                    continue;
+                }
+
+                s_ActionUsers.Remove(action);
+                action.Disable();
+            }
+
+            _acquiredActions.Clear();
+            IsEnabled = false;
+        }
+
+        // Static state survives entering Play Mode when domain reload is disabled, so start each session clean.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetActionUsers() => s_ActionUsers.Clear();
 
         static InputAction Resolve(InputActionReference reference) => reference != null ? reference.action : null;
 
