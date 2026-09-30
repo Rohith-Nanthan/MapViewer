@@ -86,8 +86,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Maps.Runtime::Maps.MapViewer
   m_MapSprite: {fileID: 0}
-  m_Settings: {fileID: 11400000, guid: eb774ba2cb9ef7c40992f5629f9c574c, type: 2}
   m_ResetViewOnEnable: 1
+  m_Pan:
+    m_Speed: 1
+    m_SmoothTime: 0.08
+    m_Invert: 0
+    m_DragSensitivity: 1
+    m_DragOnlyOverMap: 1
+  m_Zoom:
+    m_FitMode: 0
+    m_MinZoom: 1
+    m_MaxZoom: 4
+    m_DefaultZoom: 1
+    m_Speed: 1.5
+    m_StepMultiplier: 1.25
+    m_ZoomTowardsPointer: 1
+    m_ScrollOnlyOverMap: 1
+    m_SmoothTime: 0.1
   m_Input:
     m_Pan: {fileID: 4649269667180576656, guid: f3c6e501c3262814aad22c32205e3701, type: 3}
     m_Zoom: {fileID: -2249237134898556301, guid: f3c6e501c3262814aad22c32205e3701, type: 3}

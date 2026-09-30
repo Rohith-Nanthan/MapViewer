@@ -6,7 +6,7 @@ namespace Maps
     /// <summary>
     /// Applies <see cref="MapInputFrame"/>s to a <see cref="MapViewportModel"/>: directional input pans at a
     /// speed, drags follow the pointer, continuous input zooms at a rate and zoom steps multiply the zoom,
-    /// all shaped by <see cref="MapViewerSettings"/>.
+    /// all shaped by <see cref="MapPanSettings"/> and <see cref="MapZoomSettings"/>.
     /// </summary>
     public sealed class MapNavigationController
     {
@@ -16,25 +16,34 @@ namespace Maps
 
         readonly MapViewportModel _model;
         readonly IMapViewportSpace _viewportSpace;
-        MapViewerSettings _settings;
+        MapPanSettings _panSettings;
+        MapZoomSettings _zoomSettings;
 
         float _targetZoom;
         Vector2 _zoomPivot;
         Vector2 _panVelocity;
         Vector2 _lastDragPosition;
 
-        public MapNavigationController(MapViewportModel model, IMapViewportSpace viewportSpace, MapViewerSettings settings)
+        public MapNavigationController(MapViewportModel model, IMapViewportSpace viewportSpace,
+            MapPanSettings panSettings, MapZoomSettings zoomSettings)
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
             _viewportSpace = viewportSpace ?? throw new ArgumentNullException(nameof(viewportSpace));
-            Settings = settings;
+            PanSettings = panSettings;
+            ZoomSettings = zoomSettings;
             _targetZoom = model.Zoom;
         }
 
-        public MapViewerSettings Settings
+        public MapPanSettings PanSettings
         {
-            get => _settings;
-            set => _settings = value != null ? value : throw new ArgumentNullException(nameof(value));
+            get => _panSettings;
+            set => _panSettings = value ?? throw new ArgumentNullException(nameof(value));
+        }
+
+        public MapZoomSettings ZoomSettings
+        {
+            get => _zoomSettings;
+            set => _zoomSettings = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         /// <summary>Whether a drag that started over the map is in progress.</summary>
@@ -55,7 +64,7 @@ namespace Maps
         /// <summary>Jumps to the default zoom, centered on the map.</summary>
         public void ResetView()
         {
-            _model.SetZoom(_settings.Zoom.DefaultZoom, Vector2.zero);
+            _model.SetZoom(_zoomSettings.DefaultZoom, Vector2.zero);
             _model.CenterOn(MapUtil.NormalizedCenter);
             Stop();
         }
@@ -65,14 +74,14 @@ namespace Maps
             deltaTime = Mathf.Max(0f, deltaTime);
 
             bool hasPointer = TryGetPointer(input, out Vector2 pointer);
-            bool pointerAccepted = !_settings.RequirePointerOverMap || (hasPointer && MapUtil.ContainsCentered(_model.ViewportSize, pointer));
+            bool pointerOverMap = hasPointer && MapUtil.ContainsCentered(_model.ViewportSize, pointer);
 
-            UpdateDrag(input, hasPointer, pointer, pointerAccepted);
+            UpdateDrag(input, hasPointer, pointer, pointerOverMap || !_panSettings.DragOnlyOverMap);
             UpdateDirectionalPan(input.Pan, deltaTime);
-            UpdateZoom(input, deltaTime, hasPointer, pointer, pointerAccepted);
+            UpdateZoom(input, deltaTime, hasPointer, pointer, pointerOverMap || !_zoomSettings.ScrollOnlyOverMap);
         }
 
-        void UpdateDrag(in MapInputFrame input, bool hasPointer, Vector2 pointer, bool pointerAccepted)
+        void UpdateDrag(in MapInputFrame input, bool hasPointer, Vector2 pointer, bool canStartDrag)
         {
             if (!input.DragHeld || !hasPointer)
             {
@@ -83,7 +92,7 @@ namespace Maps
             if (!IsDragging)
             {
                 // Only a fresh press on the map starts a drag; a button already held elsewhere does not.
-                if (input.DragPressedThisFrame && pointerAccepted)
+                if (input.DragPressedThisFrame && canStartDrag)
                 {
                     IsDragging = true;
                     _lastDragPosition = pointer;
@@ -94,12 +103,12 @@ namespace Maps
 
             Vector2 delta = pointer - _lastDragPosition;
             _lastDragPosition = pointer;
-            _model.PanBy(delta * _settings.Pan.DragSensitivity);
+            _model.PanBy(delta * _panSettings.DragSensitivity);
         }
 
         void UpdateDirectionalPan(Vector2 direction, float deltaTime)
         {
-            MapPanSettings pan = _settings.Pan;
+            MapPanSettings pan = _panSettings;
             Vector2 viewport = _model.ViewportSize;
             float speed = pan.Speed * Mathf.Min(viewport.x, viewport.y);
 
@@ -114,9 +123,9 @@ namespace Maps
                 _model.PanBy(_panVelocity * deltaTime);
         }
 
-        void UpdateZoom(in MapInputFrame input, float deltaTime, bool hasPointer, Vector2 pointer, bool pointerAccepted)
+        void UpdateZoom(in MapInputFrame input, float deltaTime, bool hasPointer, Vector2 pointer, bool canScrollZoom)
         {
-            MapZoomSettings zoom = _settings.Zoom;
+            MapZoomSettings zoom = _zoomSettings;
 
             if (input.Zoom != 0f)
             {
@@ -124,7 +133,7 @@ namespace Maps
                 _zoomPivot = Vector2.zero;
             }
 
-            if (input.ZoomSteps != 0f && pointerAccepted)
+            if (input.ZoomSteps != 0f && canScrollZoom)
             {
                 _targetZoom *= Mathf.Pow(zoom.StepMultiplier, input.ZoomSteps);
                 _zoomPivot = zoom.ZoomTowardsPointer && hasPointer ? MapUtil.ClampCentered(_model.ViewportSize, pointer) : Vector2.zero;

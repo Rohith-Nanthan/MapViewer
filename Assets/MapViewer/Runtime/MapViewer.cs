@@ -22,11 +22,12 @@ namespace Maps
         [Tooltip("The map to display. Any sprite works; its aspect ratio is kept.")]
         [SerializeField] Sprite m_MapSprite;
 
-        [Tooltip("Pan and zoom tuning. Leave empty to use the built-in defaults.")]
-        [SerializeField] MapViewerSettings m_Settings;
-
         [Tooltip("Return to the default zoom, centered on the map, every time the map is enabled.")]
         [SerializeField] bool m_ResetViewOnEnable = true;
+
+        [SerializeField] MapPanSettings m_Pan = new MapPanSettings();
+
+        [SerializeField] MapZoomSettings m_Zoom = new MapZoomSettings();
 
         [Tooltip("Input actions the map reads while enabled. Bindings are edited in the actions asset.")]
         [SerializeField] InputSystemMapInput m_Input = new InputSystemMapInput();
@@ -39,7 +40,6 @@ namespace Maps
         readonly MapViewportModel _model = new MapViewportModel();
         MapNavigationController _controller;
         IMapInput _inputOverride;
-        MapViewerSettings _defaultSettings;
         bool _isEnabled;
 
         public event Action<bool> EnabledChanged;
@@ -58,13 +58,20 @@ namespace Maps
             }
         }
 
-        /// <summary>Pan and zoom tuning in use. Null falls back to the built-in defaults.</summary>
-        public MapViewerSettings Settings
+        /// <summary>Pan tuning. Changes apply on the next frame, so they can come from an options menu.</summary>
+        public MapPanSettings PanSettings
         {
-            get => ActiveSettings;
+            get => m_Pan;
+            set => m_Pan = value ?? throw new ArgumentNullException(nameof(value));
+        }
+
+        /// <summary>Zoom tuning. Changes apply on the next frame, so they can come from an options menu.</summary>
+        public MapZoomSettings ZoomSettings
+        {
+            get => m_Zoom;
             set
             {
-                m_Settings = value;
+                m_Zoom = value ?? throw new ArgumentNullException(nameof(value));
                 Refresh();
             }
         }
@@ -95,24 +102,6 @@ namespace Maps
 
         /// <summary>Inspector-assignable callbacks raised when the map is enabled or disabled.</summary>
         public MapViewerEvents Events => m_Events;
-
-        MapViewerSettings ActiveSettings
-        {
-            get
-            {
-                if (m_Settings != null)
-                    return m_Settings;
-
-                if (_defaultSettings == null)
-                {
-                    _defaultSettings = ScriptableObject.CreateInstance<MapViewerSettings>();
-                    _defaultSettings.name = "Default Map Viewer Settings";
-                    _defaultSettings.hideFlags = HideFlags.DontSave;
-                }
-
-                return _defaultSettings;
-            }
-        }
 
         public void Enable()
         {
@@ -182,17 +171,6 @@ namespace Maps
             EnabledChanged?.Invoke(false);
         }
 
-        void OnDestroy()
-        {
-            if (_defaultSettings == null)
-                return;
-
-            if (Application.isPlaying)
-                Destroy(_defaultSettings);
-            else
-                DestroyImmediate(_defaultSettings);
-        }
-
         void Update()
         {
             Sync();
@@ -213,7 +191,7 @@ namespace Maps
             }
 
             m_View.SetSprite(m_MapSprite);
-            _controller = new MapNavigationController(_model, m_View, ActiveSettings);
+            _controller = new MapNavigationController(_model, m_View, m_Pan, m_Zoom);
             Sync();
             _controller.Stop();
             return true;
@@ -228,16 +206,15 @@ namespace Maps
             Render();
         }
 
-        // Pushes the latest settings and layout into the model.
+        // Pushes the latest settings and layout into the controller and model.
         void Sync()
         {
-            MapViewerSettings activeSettings = ActiveSettings;
-            MapZoomSettings zoom = activeSettings.Zoom;
-            _controller.Settings = activeSettings;
+            _controller.PanSettings = m_Pan;
+            _controller.ZoomSettings = m_Zoom;
 
-            m_View.SetFitMode(zoom.FitMode);
-            _model.SetFitMode(zoom.FitMode);
-            _model.SetZoomLimits(zoom.MinZoom, zoom.MaxZoom);
+            m_View.SetFitMode(m_Zoom.FitMode);
+            _model.SetFitMode(m_Zoom.FitMode);
+            _model.SetZoomLimits(m_Zoom.MinZoom, m_Zoom.MaxZoom);
             _model.SetContentAspect(m_View.ContentAspect);
             _model.SetViewportSize(m_View.Size);
         }
@@ -247,6 +224,8 @@ namespace Maps
 #if UNITY_EDITOR
         void OnValidate()
         {
+            m_Zoom.Validate();
+
             // Other components cannot be changed safely during OnValidate, so refresh the preview right after.
             UnityEditor.EditorApplication.delayCall -= RefreshPreview;
             UnityEditor.EditorApplication.delayCall += RefreshPreview;
@@ -258,7 +237,7 @@ namespace Maps
                 return;
 
             m_View.SetSprite(m_MapSprite);
-            m_View.SetFitMode(m_Settings != null ? m_Settings.Zoom.FitMode : MapFitMode.Fit);
+            m_View.SetFitMode(m_Zoom.FitMode);
             Refresh();
         }
 #endif

@@ -10,17 +10,16 @@ namespace Maps.Tests
     /// <summary>End-to-end checks of the shipped prefab: public API, input actions and device control.</summary>
     public class MapViewerTests : InputTestFixture
     {
-        const string PrefabPath = "Assets/MapViewer/Prefabs/MapViewer.prefab";
-        const string ControlsPath = "Assets/MapViewer/Input/MapViewerControls.inputactions";
+        const string k_PrefabPath = "Assets/MapViewer/Prefabs/MapViewer.prefab";
+        const string k_ControlsPath = "Assets/MapViewer/Input/MapViewerControls.inputactions";
 
         // Unscaled seconds to hold an input; long enough to see movement at the default speeds.
-        const float HoldTime = 0.4f;
+        const float k_HoldTime = 0.4f;
 
         readonly List<bool> _enabledChanges = new List<bool>();
         GameObject _canvas;
         Texture2D _texture;
         Sprite _sprite;
-        MapViewerSettings _settings;
         MapViewer _viewer;
         InputActionMap _mapActions;
         Gamepad _gamepad;
@@ -33,8 +32,8 @@ namespace Maps.Tests
             _mouse = InputSystem.AddDevice<Mouse>();
 
 #if UNITY_EDITOR
-            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
-            _mapActions = UnityEditor.AssetDatabase.LoadAssetAtPath<InputActionAsset>(ControlsPath).FindActionMap("Map");
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(k_PrefabPath);
+            _mapActions = UnityEditor.AssetDatabase.LoadAssetAtPath<InputActionAsset>(k_ControlsPath).FindActionMap("Map");
 #else
             GameObject prefab = null;
 #endif
@@ -47,9 +46,6 @@ namespace Maps.Tests
             _texture = new Texture2D(256, 256);
             _sprite = Sprite.Create(_texture, new Rect(0f, 0f, 256f, 256f), new Vector2(0.5f, 0.5f));
 
-            // Tests tune their own copy; changing the shared settings asset in Play Mode would persist.
-            _settings = ScriptableObject.CreateInstance<MapViewerSettings>();
-
             GameObject instance = Object.Instantiate(prefab, _canvas.transform);
             instance.SetActive(false);
 
@@ -59,7 +55,6 @@ namespace Maps.Tests
             viewerTransform.sizeDelta = new Vector2(800f, 450f);
             viewerTransform.anchoredPosition = Vector2.zero;
             _viewer = instance.GetComponent<MapViewer>();
-            _viewer.Settings = _settings;
             _viewer.MapSprite = _sprite;
             _viewer.EnabledChanged += _enabledChanges.Add;
         }
@@ -68,7 +63,6 @@ namespace Maps.Tests
         {
             Time.timeScale = 1f;
             Object.Destroy(_canvas);
-            Object.Destroy(_settings);
             Object.Destroy(_sprite);
             Object.Destroy(_texture);
             _enabledChanges.Clear();
@@ -77,7 +71,7 @@ namespace Maps.Tests
 
         IEnumerable<InputAction> MapActions => _mapActions.actions;
 
-        static IEnumerator Hold() => new WaitForSecondsRealtime(HoldTime);
+        static IEnumerator Hold() => new WaitForSecondsRealtime(k_HoldTime);
 
         Vector2 ViewportCenterOnScreen()
         {
@@ -134,7 +128,7 @@ namespace Maps.Tests
         [UnityTest]
         public IEnumerator LeftStickAndDpad_PanZoomedMap()
         {
-            _settings.Zoom.DefaultZoom = 4f;
+            _viewer.ZoomSettings.DefaultZoom = 4f;
             _viewer.Enable();
             yield return null;
 
@@ -179,7 +173,7 @@ namespace Maps.Tests
         [UnityTest]
         public IEnumerator MiddleMouseDrag_PansMap()
         {
-            _settings.Zoom.DefaultZoom = 4f;
+            _viewer.ZoomSettings.DefaultZoom = 4f;
             _viewer.Enable();
             yield return null;
             Vector2 start = ViewportCenterOnScreen();

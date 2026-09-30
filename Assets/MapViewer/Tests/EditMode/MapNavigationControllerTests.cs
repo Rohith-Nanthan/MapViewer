@@ -6,9 +6,10 @@ namespace Maps.Tests
     public class MapNavigationControllerTests
     {
         // The fake screen matches the 1600 x 900 viewport, so screen (800, 450) is the viewport center.
-        static readonly Vector2 ScreenCenter = new Vector2(800f, 450f);
+        static readonly Vector2 k_ScreenCenter = new Vector2(800f, 450f);
 
-        MapViewerSettings _settings;
+        MapPanSettings _panSettings;
+        MapZoomSettings _zoomSettings;
         MapViewportModel _model;
         MapNavigationController _controller;
 
@@ -16,7 +17,7 @@ namespace Maps.Tests
         {
             public bool TryScreenToViewport(Vector2 screenPosition, out Vector2 viewportPosition)
             {
-                viewportPosition = screenPosition - ScreenCenter;
+                viewportPosition = screenPosition - k_ScreenCenter;
                 return true;
             }
         }
@@ -24,20 +25,16 @@ namespace Maps.Tests
         [SetUp]
         public void SetUp()
         {
-            _settings = ScriptableObject.CreateInstance<MapViewerSettings>();
-            _settings.Pan.SmoothTime = 0f;
-            _settings.Zoom.SmoothTime = 0f;
+            _panSettings = new MapPanSettings { SmoothTime = 0f };
+            _zoomSettings = new MapZoomSettings { SmoothTime = 0f };
 
             _model = new MapViewportModel();
             _model.SetZoomLimits(1f, 4f);
             _model.SetContentAspect(2f);
             _model.SetViewportSize(new Vector2(1600f, 900f));
 
-            _controller = new MapNavigationController(_model, new FakeViewportSpace(), _settings);
+            _controller = new MapNavigationController(_model, new FakeViewportSpace(), _panSettings, _zoomSettings);
         }
-
-        [TearDown]
-        public void TearDown() => Object.DestroyImmediate(_settings);
 
         static MapInputFrame PointerAt(Vector2 screenPosition) =>
             new MapInputFrame { HasPointer = true, PointerPosition = screenPosition };
@@ -58,7 +55,7 @@ namespace Maps.Tests
         public void DirectionalPan_MovesViewWithStick()
         {
             ZoomModelTo(4f);
-            _settings.Pan.Speed = 1f;
+            _panSettings.Speed = 1f;
 
             _controller.Tick(new MapInputFrame { Pan = Vector2.right }, 0.1f);
 
@@ -70,8 +67,8 @@ namespace Maps.Tests
         public void DirectionalPan_Inverted_MovesMapWithStick()
         {
             ZoomModelTo(4f);
-            _settings.Pan.Speed = 1f;
-            _settings.Pan.Invert = true;
+            _panSettings.Speed = 1f;
+            _panSettings.Invert = true;
 
             _controller.Tick(new MapInputFrame { Pan = Vector2.up }, 0.1f);
 
@@ -82,8 +79,8 @@ namespace Maps.Tests
         public void DirectionalPan_WithSmoothTime_EasesIn()
         {
             ZoomModelTo(4f);
-            _settings.Pan.Speed = 1f;
-            _settings.Pan.SmoothTime = 0.1f;
+            _panSettings.Speed = 1f;
+            _panSettings.SmoothTime = 0.1f;
 
             _controller.Tick(new MapInputFrame { Pan = Vector2.right }, 0.1f);
 
@@ -94,7 +91,7 @@ namespace Maps.Tests
         public void DirectionalPan_AfterRelease_ComesToRest()
         {
             ZoomModelTo(4f);
-            _settings.Pan.SmoothTime = 0.1f;
+            _panSettings.SmoothTime = 0.1f;
             _controller.Tick(new MapInputFrame { Pan = Vector2.right }, 0.1f);
 
             for (int frame = 0; frame < 120; frame++)
@@ -108,7 +105,7 @@ namespace Maps.Tests
         [Test]
         public void ContinuousZoom_Positive_ZoomsInAtDoublingsPerSecond()
         {
-            _settings.Zoom.Speed = 1f;
+            _zoomSettings.Speed = 1f;
 
             _controller.Tick(new MapInputFrame { Zoom = 1f }, 1f);
 
@@ -119,7 +116,7 @@ namespace Maps.Tests
         public void ContinuousZoom_Negative_ZoomsOut()
         {
             ZoomModelTo(4f);
-            _settings.Zoom.Speed = 1f;
+            _zoomSettings.Speed = 1f;
 
             _controller.Tick(new MapInputFrame { Zoom = -1f }, 1f);
 
@@ -149,8 +146,8 @@ namespace Maps.Tests
         [Test]
         public void ZoomSteps_MultiplyZoomPerStep()
         {
-            _settings.Zoom.StepMultiplier = 1.25f;
-            MapInputFrame input = PointerAt(ScreenCenter);
+            _zoomSettings.StepMultiplier = 1.25f;
+            MapInputFrame input = PointerAt(k_ScreenCenter);
             input.ZoomSteps = 2f;
 
             _controller.Tick(input, 0.016f);
@@ -162,7 +159,7 @@ namespace Maps.Tests
         public void ZoomSteps_KeepMapPointUnderPointer()
         {
             ZoomModelTo(1.5f);
-            MapInputFrame input = PointerAt(ScreenCenter + new Vector2(200f, 150f));
+            MapInputFrame input = PointerAt(k_ScreenCenter + new Vector2(200f, 150f));
             input.ZoomSteps = 3f;
             Vector2 pointUnderPointer = _model.ViewportToNormalized(new Vector2(200f, 150f));
 
@@ -185,7 +182,7 @@ namespace Maps.Tests
         [Test]
         public void ZoomSteps_PointerOutsideMap_ApplyWhenPointerNotRequired()
         {
-            _settings.RequirePointerOverMap = false;
+            _zoomSettings.ScrollOnlyOverMap = false;
             MapInputFrame input = PointerAt(new Vector2(-100f, -100f));
             input.ZoomSteps = 2f;
 
@@ -197,8 +194,8 @@ namespace Maps.Tests
         [Test]
         public void ZoomSmoothing_EasesTowardsAndSettlesOnTarget()
         {
-            _settings.Zoom.SmoothTime = 0.1f;
-            MapInputFrame input = PointerAt(ScreenCenter);
+            _zoomSettings.SmoothTime = 0.1f;
+            MapInputFrame input = PointerAt(k_ScreenCenter);
             input.ZoomSteps = 1f;
 
             _controller.Tick(input, 1f / 60f);
@@ -214,10 +211,10 @@ namespace Maps.Tests
         public void Drag_StartedOnMap_FollowsPointer()
         {
             ZoomModelTo(4f);
-            MapInputFrame press = PointerAt(ScreenCenter);
+            MapInputFrame press = PointerAt(k_ScreenCenter);
             press.DragPressedThisFrame = true;
             press.DragHeld = true;
-            MapInputFrame move = PointerAt(ScreenCenter + new Vector2(100f, -50f));
+            MapInputFrame move = PointerAt(k_ScreenCenter + new Vector2(100f, -50f));
             move.DragHeld = true;
 
             _controller.Tick(press, 0.016f);
@@ -248,9 +245,9 @@ namespace Maps.Tests
         public void Drag_ButtonAlreadyHeld_DoesNotStartDrag()
         {
             ZoomModelTo(4f);
-            MapInputFrame held = PointerAt(ScreenCenter);
+            MapInputFrame held = PointerAt(k_ScreenCenter);
             held.DragHeld = true;
-            MapInputFrame move = PointerAt(ScreenCenter + new Vector2(100f, 0f));
+            MapInputFrame move = PointerAt(k_ScreenCenter + new Vector2(100f, 0f));
             move.DragHeld = true;
 
             _controller.Tick(held, 0.016f);
@@ -263,13 +260,13 @@ namespace Maps.Tests
         public void Drag_AfterRelease_StopsFollowingPointer()
         {
             ZoomModelTo(4f);
-            MapInputFrame press = PointerAt(ScreenCenter);
+            MapInputFrame press = PointerAt(k_ScreenCenter);
             press.DragPressedThisFrame = true;
             press.DragHeld = true;
 
             _controller.Tick(press, 0.016f);
-            _controller.Tick(PointerAt(ScreenCenter), 0.016f);
-            _controller.Tick(PointerAt(ScreenCenter + new Vector2(100f, 0f)), 0.016f);
+            _controller.Tick(PointerAt(k_ScreenCenter), 0.016f);
+            _controller.Tick(PointerAt(k_ScreenCenter + new Vector2(100f, 0f)), 0.016f);
 
             Assert.That(_controller.IsDragging, Is.False);
             Assert.That(_model.Pan, Is.EqualTo(Vector2.zero));
@@ -278,7 +275,7 @@ namespace Maps.Tests
         [Test]
         public void ResetView_ReturnsToDefaultZoomCenteredOnMap()
         {
-            _settings.Zoom.DefaultZoom = 2f;
+            _zoomSettings.DefaultZoom = 2f;
             ZoomModelTo(4f);
             _model.PanBy(new Vector2(500f, 200f));
 

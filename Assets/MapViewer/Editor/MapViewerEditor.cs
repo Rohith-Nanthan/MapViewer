@@ -4,33 +4,33 @@ using UnityEngine;
 namespace Maps
 {
     /// <summary>
-    /// Inspector for <see cref="MapViewer"/>: flags a missing sprite, edits the settings asset in place and,
-    /// in Play Mode, shows the live view with buttons to try the public API.
+    /// Inspector for <see cref="MapViewer"/>, the one component designers configure: map sprite, pan and zoom
+    /// tuning, input actions, UI references and events. In Play Mode it also shows the live view with
+    /// buttons to try the public API.
     /// </summary>
     [CustomEditor(typeof(MapViewer))]
     sealed class MapViewerEditor : Editor
     {
-        static bool s_ShowSettings = true;
+        static readonly string[] k_ViewReferences = { "m_Viewport", "m_Content", "m_MapImage", "m_MapFitter" };
 
         SerializedProperty _mapSprite;
-        SerializedProperty _settings;
         SerializedProperty _resetViewOnEnable;
-        SerializedProperty _view;
+        SerializedProperty _pan;
+        SerializedProperty _zoom;
         SerializedProperty _input;
+        SerializedProperty _view;
         SerializedProperty _events;
-        Editor _settingsEditor;
 
         void OnEnable()
         {
             _mapSprite = serializedObject.FindProperty("m_MapSprite");
-            _settings = serializedObject.FindProperty("m_Settings");
             _resetViewOnEnable = serializedObject.FindProperty("m_ResetViewOnEnable");
-            _view = serializedObject.FindProperty("m_View");
+            _pan = serializedObject.FindProperty("m_Pan");
+            _zoom = serializedObject.FindProperty("m_Zoom");
             _input = serializedObject.FindProperty("m_Input");
+            _view = serializedObject.FindProperty("m_View");
             _events = serializedObject.FindProperty("m_Events");
         }
-
-        void OnDisable() => DestroyImmediate(_settingsEditor);
 
         public override bool RequiresConstantRepaint() => Application.isPlaying;
 
@@ -41,11 +41,15 @@ namespace Maps
             EditorGUILayout.PropertyField(_mapSprite);
             if (_mapSprite.objectReferenceValue == null)
                 EditorGUILayout.HelpBox("Assign the sprite to show as the map.", MessageType.Warning);
-
             EditorGUILayout.PropertyField(_resetViewOnEnable);
-            DrawSettings();
+
+            DrawSection("Pan", _pan);
+            DrawSection("Zoom", _zoom);
+
             EditorGUILayout.PropertyField(_input, true);
-            DrawView();
+            EditorGUILayout.PropertyField(_view, true);
+            if (HasMissingViewReference())
+                EditorGUILayout.HelpBox("View is missing UI references. Use the MapViewer prefab, which wires them.", MessageType.Error);
             EditorGUILayout.PropertyField(_events, true);
 
             serializedObject.ApplyModifiedProperties();
@@ -54,54 +58,29 @@ namespace Maps
                 DrawRuntimeControls((MapViewer)target);
         }
 
-        void DrawView()
+        // Pan and zoom are what designers tune most, so they are laid out open rather than in foldouts.
+        static void DrawSection(string title, SerializedProperty section)
         {
-            EditorGUILayout.PropertyField(_view, true);
-            foreach (string reference in new[] { "m_Viewport", "m_Content", "m_MapImage", "m_MapFitter" })
-            {
-                if (_view.FindPropertyRelative(reference).objectReferenceValue != null)
-                    continue;
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
 
-                EditorGUILayout.HelpBox("View is missing UI references. Use the MapViewer prefab, which wires them.", MessageType.Error);
-                break;
-            }
+            SerializedProperty field = section.Copy();
+            SerializedProperty end = section.GetEndProperty();
+            for (bool enterChildren = true; field.NextVisible(enterChildren) && !SerializedProperty.EqualContents(field, end); enterChildren = false)
+                EditorGUILayout.PropertyField(field, true);
+
+            EditorGUILayout.Space();
         }
 
-        void DrawSettings()
+        bool HasMissingViewReference()
         {
-            EditorGUILayout.PropertyField(_settings);
-            var settings = _settings.objectReferenceValue as MapViewerSettings;
-            if (settings == null)
+            foreach (string reference in k_ViewReferences)
             {
-                EditorGUILayout.HelpBox("No settings asset assigned, so the built-in defaults are used.", MessageType.Info);
-                if (GUILayout.Button("Create Settings Asset"))
-                    CreateSettingsAsset();
-                return;
+                if (_view.FindPropertyRelative(reference).objectReferenceValue == null)
+                    return true;
             }
 
-            s_ShowSettings = EditorGUILayout.Foldout(s_ShowSettings, $"Pan & Zoom ({settings.name}, shared asset)", true);
-            if (!s_ShowSettings)
-                return;
-
-            CreateCachedEditor(settings, null, ref _settingsEditor);
-            using (new EditorGUI.IndentLevelScope())
-                _settingsEditor.OnInspectorGUI();
-        }
-
-        void CreateSettingsAsset()
-        {
-            string path = EditorUtility.SaveFilePanelInProject(
-                "Create Map Viewer Settings", "MapViewerSettings", "asset", "Choose where to save the settings.");
-            if (string.IsNullOrEmpty(path))
-                return;
-
-            var settings = CreateInstance<MapViewerSettings>();
-            AssetDatabase.CreateAsset(settings, path);
-            _settings.objectReferenceValue = settings;
-
-            // The modal dialog broke this GUI pass's layout, so save now and start a fresh pass.
-            serializedObject.ApplyModifiedProperties();
-            GUIUtility.ExitGUI();
+            return false;
         }
 
         static void DrawRuntimeControls(MapViewer viewer)
