@@ -16,19 +16,19 @@ namespace Maps
         SerializedProperty _mapSprite;
         SerializedProperty _settings;
         SerializedProperty _resetViewOnEnable;
-        SerializedProperty _viewport;
+        SerializedProperty _view;
         SerializedProperty _onEnabled;
         SerializedProperty _onDisabled;
         Editor _settingsEditor;
 
         void OnEnable()
         {
-            _mapSprite = serializedObject.FindProperty("mapSprite");
-            _settings = serializedObject.FindProperty("settings");
-            _resetViewOnEnable = serializedObject.FindProperty("resetViewOnEnable");
-            _viewport = serializedObject.FindProperty("viewport");
-            _onEnabled = serializedObject.FindProperty("onEnabled");
-            _onDisabled = serializedObject.FindProperty("onDisabled");
+            _mapSprite = serializedObject.FindProperty("m_MapSprite");
+            _settings = serializedObject.FindProperty("m_Settings");
+            _resetViewOnEnable = serializedObject.FindProperty("m_ResetViewOnEnable");
+            _view = serializedObject.FindProperty("m_View");
+            _onEnabled = serializedObject.FindProperty("m_OnEnabled");
+            _onDisabled = serializedObject.FindProperty("m_OnDisabled");
         }
 
         void OnDisable() => DestroyImmediate(_settingsEditor);
@@ -44,8 +44,8 @@ namespace Maps
                 EditorGUILayout.HelpBox("Assign the sprite to show as the map.", MessageType.Warning);
 
             EditorGUILayout.PropertyField(_resetViewOnEnable);
-            EditorGUILayout.PropertyField(_viewport);
             DrawSettings();
+            DrawView();
 
             s_ShowEvents = EditorGUILayout.Foldout(s_ShowEvents, "Events", true);
             if (s_ShowEvents)
@@ -58,6 +58,19 @@ namespace Maps
 
             if (Application.isPlaying)
                 DrawRuntimeControls((MapViewer)target);
+        }
+
+        void DrawView()
+        {
+            EditorGUILayout.PropertyField(_view, true);
+            foreach (string reference in new[] { "m_Viewport", "m_Content", "m_MapImage", "m_MapFitter" })
+            {
+                if (_view.FindPropertyRelative(reference).objectReferenceValue != null)
+                    continue;
+
+                EditorGUILayout.HelpBox("View is missing UI references. Use the MapViewer prefab, which wires them.", MessageType.Error);
+                break;
+            }
         }
 
         void DrawSettings()

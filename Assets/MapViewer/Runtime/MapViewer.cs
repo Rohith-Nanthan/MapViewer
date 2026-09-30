@@ -18,25 +18,25 @@ namespace Maps
     public sealed class MapViewer : MonoBehaviour, IMapViewer
     {
         // Caps a single step so a frame hitch cannot fling the map while a stick or trigger is held.
-        const float MaxDeltaTime = 0.1f;
+        const float k_MaxDeltaTime = 0.1f;
 
         [Tooltip("The map to display. Any sprite works; its aspect ratio is kept.")]
-        [SerializeField] Sprite mapSprite;
+        [SerializeField] Sprite m_MapSprite;
 
         [Tooltip("Pan and zoom tuning. Leave empty to use the built-in defaults.")]
-        [SerializeField] MapViewerSettings settings;
+        [SerializeField] MapViewerSettings m_Settings;
 
         [Tooltip("Return to the default zoom, centered on the map, every time the map is enabled.")]
-        [SerializeField] bool resetViewOnEnable = true;
+        [SerializeField] bool m_ResetViewOnEnable = true;
 
-        [Tooltip("The masked rectangle the map is seen through.")]
-        [SerializeField] MapViewport viewport;
+        [Tooltip("UI objects that display the map. The prefab already wires them.")]
+        [SerializeField] MapView m_View = new MapView();
 
         [Tooltip("Invoked after the map is enabled.")]
-        [SerializeField] UnityEvent onEnabled = new UnityEvent();
+        [SerializeField] UnityEvent m_OnEnabled = new UnityEvent();
 
         [Tooltip("Invoked after the map is disabled.")]
-        [SerializeField] UnityEvent onDisabled = new UnityEvent();
+        [SerializeField] UnityEvent m_OnDisabled = new UnityEvent();
 
         readonly MapViewportModel _model = new MapViewportModel();
         MapNavigationController _controller;
@@ -51,12 +51,11 @@ namespace Maps
         /// <summary>The displayed map. Changing it keeps the current view where the new map allows.</summary>
         public Sprite MapSprite
         {
-            get => mapSprite;
+            get => m_MapSprite;
             set
             {
-                mapSprite = value;
-                if (viewport != null)
-                    viewport.SetSprite(mapSprite);
+                m_MapSprite = value;
+                m_View.SetSprite(m_MapSprite);
                 Refresh();
             }
         }
@@ -67,7 +66,7 @@ namespace Maps
             get => ActiveSettings;
             set
             {
-                settings = value;
+                m_Settings = value;
                 Refresh();
             }
         }
@@ -90,15 +89,15 @@ namespace Maps
         /// <summary>Current pan and zoom, e.g. to place markers with <see cref="MapViewportModel.NormalizedToViewport"/>.</summary>
         public MapViewportModel Model => _model;
 
-        /// <summary>The masked rectangle the map is seen through; overlays such as markers can be parented to it.</summary>
-        public MapViewport Viewport => viewport;
+        /// <summary>UI presentation of the map. Its viewport can host overlays such as markers.</summary>
+        public MapView View => m_View;
 
         MapViewerSettings ActiveSettings
         {
             get
             {
-                if (settings != null)
-                    return settings;
+                if (m_Settings != null)
+                    return m_Settings;
 
                 if (_defaultSettings == null)
                 {
@@ -158,12 +157,12 @@ namespace Maps
             if (!TryInitialize())
                 return;
 
-            if (resetViewOnEnable)
+            if (m_ResetViewOnEnable)
                 ResetView();
 
             _input.Enable();
             _isEnabled = true;
-            onEnabled.Invoke();
+            m_OnEnabled.Invoke();
             EnabledChanged?.Invoke(true);
         }
 
@@ -175,7 +174,7 @@ namespace Maps
             _input.Disable();
             _controller.Stop();
             _isEnabled = false;
-            onDisabled.Invoke();
+            m_OnDisabled.Invoke();
             EnabledChanged?.Invoke(false);
         }
 
@@ -193,7 +192,7 @@ namespace Maps
         void Update()
         {
             Sync();
-            _controller.Tick(_input.ReadFrame(), Mathf.Min(Time.unscaledDeltaTime, MaxDeltaTime));
+            _controller.Tick(_input.ReadFrame(), Mathf.Min(Time.unscaledDeltaTime, k_MaxDeltaTime));
             Render();
         }
 
@@ -202,12 +201,9 @@ namespace Maps
             if (_controller != null)
                 return true;
 
-            if (viewport == null)
-                viewport = GetComponentInChildren<MapViewport>(true);
-
-            if (viewport == null)
+            if (!m_View.IsValid)
             {
-                Debug.LogError($"{nameof(MapViewer)} '{name}' needs a {nameof(MapViewport)} to display the map.", this);
+                Debug.LogError($"{nameof(MapViewer)} '{name}' is missing UI references in its View section.", this);
                 enabled = false;
                 return false;
             }
@@ -215,8 +211,8 @@ namespace Maps
             if (_input == null)
                 _input = TryGetComponent(out IMapInput input) ? input : NullMapInput.Instance;
 
-            viewport.SetSprite(mapSprite);
-            _controller = new MapNavigationController(_model, viewport, ActiveSettings);
+            m_View.SetSprite(m_MapSprite);
+            _controller = new MapNavigationController(_model, m_View, ActiveSettings);
             Sync();
             _controller.Stop();
             return true;
@@ -238,14 +234,14 @@ namespace Maps
             MapZoomSettings zoom = activeSettings.Zoom;
             _controller.Settings = activeSettings;
 
-            viewport.SetFitMode(zoom.FitMode);
+            m_View.SetFitMode(zoom.FitMode);
             _model.SetFitMode(zoom.FitMode);
             _model.SetZoomLimits(zoom.MinZoom, zoom.MaxZoom);
-            _model.SetContentAspect(viewport.ContentAspect);
-            _model.SetViewportSize(viewport.Size);
+            _model.SetContentAspect(m_View.ContentAspect);
+            _model.SetViewportSize(m_View.Size);
         }
 
-        void Render() => viewport.Render(_model.Pan, _model.Zoom);
+        void Render() => m_View.Render(_model.Pan, _model.Zoom);
 
 #if UNITY_EDITOR
         void OnValidate()
@@ -257,16 +253,11 @@ namespace Maps
 
         void RefreshPreview()
         {
-            if (this == null)
+            if (this == null || !m_View.IsValid)
                 return;
 
-            if (viewport == null)
-                viewport = GetComponentInChildren<MapViewport>(true);
-            if (viewport == null)
-                return;
-
-            viewport.SetSprite(mapSprite);
-            viewport.SetFitMode(settings != null ? settings.Zoom.FitMode : MapFitMode.Fit);
+            m_View.SetSprite(m_MapSprite);
+            m_View.SetFitMode(m_Settings != null ? m_Settings.Zoom.FitMode : MapFitMode.Fit);
             Refresh();
         }
 #endif

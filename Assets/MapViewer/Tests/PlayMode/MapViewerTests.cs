@@ -81,7 +81,7 @@ namespace Maps.Tests
 
         Vector2 ViewportCenterOnScreen()
         {
-            var viewportTransform = (RectTransform)_viewer.Viewport.transform;
+            RectTransform viewportTransform = _viewer.View.Viewport;
             return RectTransformUtility.WorldToScreenPoint(null, viewportTransform.TransformPoint(viewportTransform.rect.center));
         }
 

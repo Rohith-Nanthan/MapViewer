@@ -86,14 +86,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32702326d88b4f147a9f5fe6401ccf8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Maps.Runtime::Maps.MapViewer
-  mapSprite: {fileID: 0}
-  settings: {fileID: 11400000, guid: eb774ba2cb9ef7c40992f5629f9c574c, type: 2}
-  resetViewOnEnable: 1
-  viewport: {fileID: 1421958772149727841}
-  onEnabled:
+  m_MapSprite: {fileID: 0}
+  m_Settings: {fileID: 11400000, guid: eb774ba2cb9ef7c40992f5629f9c574c, type: 2}
+  m_ResetViewOnEnable: 1
+  m_View:
+    m_Viewport: {fileID: 1427593104990959848}
+    m_Content: {fileID: 8161719631957052336}
+    m_MapImage: {fileID: 8784964240784429630}
+    m_MapFitter: {fileID: 952707764592455853}
+  m_OnEnabled:
     m_PersistentCalls:
       m_Calls: []
-  onDisabled:
+  m_OnDisabled:
     m_PersistentCalls:
       m_Calls: []
 --- !u!114 &1004319354488457316
@@ -125,7 +129,6 @@ GameObject:
   - component: {fileID: 2428161901389175615}
   - component: {fileID: 644022375804706878}
   - component: {fileID: 8951635415764606432}
-  - component: {fileID: 1421958772149727841}
   m_Layer: 0
   m_Name: Viewport
   m_TagString: Untagged
@@ -205,21 +208,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
   m_Padding: {x: 0, y: 0, z: 0, w: 0}
   m_Softness: {x: 0, y: 0}
---- !u!114 &1421958772149727841
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3662043815357401522}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 435255eb9cad0a64480d47280c908c36, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Maps.Runtime::Maps.MapViewport
-  content: {fileID: 8161719631957052336}
-  mapImage: {fileID: 8784964240784429630}
-  mapFitter: {fileID: 952707764592455853}
 --- !u!1 &8417951230057926856
 GameObject:
   m_ObjectHideFlags: 0
