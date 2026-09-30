@@ -76,6 +76,20 @@ namespace Maps.Tests
         }
 
         [Test]
+        public void Disable_WhenNeverEnabled_LeavesSharedActionsRunning()
+        {
+            // Another viewer sharing the asset has the actions running.
+            InputActionMap sharedMap = _controls.FindActionMap("Map");
+            sharedMap.Enable();
+
+            _input.Disable();
+
+            foreach (InputAction action in sharedMap.actions)
+                Assert.That(action.enabled, Is.True, action.name);
+            sharedMap.Disable();
+        }
+
+        [Test]
         public void ReadFrame_WhileDisabled_ReturnsNoInput()
         {
             Set(_gamepad.rightTrigger, 1f);

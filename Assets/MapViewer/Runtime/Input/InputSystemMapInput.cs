@@ -9,7 +9,8 @@ namespace Maps
     /// </summary>
     /// <remarks>
     /// <see cref="Enable"/> and <see cref="Disable"/> switch every referenced action on or off. Actions are
-    /// only live while this component is enabled too, so disabling it never leaves them running.
+    /// only live while this component is enabled too, so disabling it never leaves them running. It only
+    /// ever disables actions it enabled itself, so viewers sharing an actions asset do not cut each other off.
     /// </remarks>
     [AddComponentMenu("Map Viewer/Input System Map Input")]
     [DisallowMultipleComponent]
@@ -37,13 +38,15 @@ namespace Maps
         public void Enable()
         {
             _requested = true;
-            SetActionsEnabled(enabled && gameObject.activeInHierarchy);
+            if (enabled && gameObject.activeInHierarchy)
+                SetActionsEnabled(true);
         }
 
         public void Disable()
         {
             _requested = false;
-            SetActionsEnabled(false);
+            if (IsEnabled)
+                SetActionsEnabled(false);
         }
 
         public MapInputFrame ReadFrame()
@@ -67,9 +70,17 @@ namespace Maps
             };
         }
 
-        void OnEnable() => SetActionsEnabled(_requested);
+        void OnEnable()
+        {
+            if (_requested)
+                SetActionsEnabled(true);
+        }
 
-        void OnDisable() => SetActionsEnabled(false);
+        void OnDisable()
+        {
+            if (IsEnabled)
+                SetActionsEnabled(false);
+        }
 
         void SetActionsEnabled(bool value)
         {
