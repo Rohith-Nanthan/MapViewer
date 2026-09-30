@@ -10,8 +10,9 @@ namespace Maps.Tests
     /// <summary>End-to-end checks of the shipped prefab: public API, input actions and device control.</summary>
     public class MapViewerTests : InputTestFixture
     {
-        const string k_PrefabPath = "Assets/MapViewer/Prefabs/MapViewer.prefab";
-        const string k_ControlsPath = "Assets/MapViewer/Input/MapViewerControls.inputactions";
+        // Looked up by GUID so the tests work wherever the MapViewer folder is placed.
+        const string k_PrefabGuid = "5a1f9ce9c2052f24a82786d60a905ee0";
+        const string k_ControlsGuid = "f3c6e501c3262814aad22c32205e3701";
 
         // Unscaled seconds to hold an input; long enough to see movement at the default speeds.
         const float k_HoldTime = 0.4f;
@@ -32,8 +33,9 @@ namespace Maps.Tests
             _mouse = InputSystem.AddDevice<Mouse>();
 
 #if UNITY_EDITOR
-            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(k_PrefabPath);
-            _mapActions = UnityEditor.AssetDatabase.LoadAssetAtPath<InputActionAsset>(k_ControlsPath).FindActionMap("Map");
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(UnityEditor.AssetDatabase.GUIDToAssetPath(k_PrefabGuid));
+            _mapActions = UnityEditor.AssetDatabase.LoadAssetAtPath<InputActionAsset>(
+                UnityEditor.AssetDatabase.GUIDToAssetPath(k_ControlsGuid)).FindActionMap("Map");
 #else
             GameObject prefab = null;
 #endif

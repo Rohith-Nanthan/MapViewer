@@ -10,7 +10,8 @@ namespace Maps.Tests
     /// <summary>Drives virtual devices through the shipped bindings to check what the map receives.</summary>
     public class InputSystemMapInputTests : InputTestFixture
     {
-        const string k_ControlsPath = "Assets/MapViewer/Input/MapViewerControls.inputactions";
+        // Looked up by GUID so the tests work wherever the MapViewer folder is placed.
+        const string k_ControlsGuid = "f3c6e501c3262814aad22c32205e3701";
 
         readonly List<Object> _createdObjects = new List<Object>();
         readonly List<InputSystemMapInput> _inputs = new List<InputSystemMapInput>();
@@ -26,7 +27,8 @@ namespace Maps.Tests
             _mouse = InputSystem.AddDevice<Mouse>();
 
             // A copy of the shipped asset tests the real bindings without mutating the asset itself.
-            _controls = Track(Object.Instantiate(AssetDatabase.LoadAssetAtPath<InputActionAsset>(k_ControlsPath)));
+            var shippedControls = AssetDatabase.LoadAssetAtPath<InputActionAsset>(AssetDatabase.GUIDToAssetPath(k_ControlsGuid));
+            _controls = Track(Object.Instantiate(shippedControls));
             _input = CreateInput();
         }
 
