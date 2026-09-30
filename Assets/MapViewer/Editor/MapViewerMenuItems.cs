@@ -10,12 +10,12 @@ namespace Maps
     /// <summary>Adds GameObject > UI > Map Viewer, which drops the prefab into a canvas like Unity's own UI items.</summary>
     static class MapViewerMenuItems
     {
-        const string PrefabGuid = "5a1f9ce9c2052f24a82786d60a905ee0";
+        const string k_PrefabGuid = "5a1f9ce9c2052f24a82786d60a905ee0";
 
         [MenuItem("GameObject/UI/Map Viewer", false, 2100)]
         static void CreateMapViewer(MenuCommand command)
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(PrefabGuid));
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(k_PrefabGuid));
             if (prefab == null)
             {
                 Debug.LogError("The Map Viewer prefab could not be found. Was it deleted?");

@@ -5,7 +5,7 @@ namespace Maps.Tests
 {
     public class MapViewportModelTests
     {
-        static readonly Vector2 Viewport = new Vector2(1600f, 900f);
+        static readonly Vector2 k_Viewport = new Vector2(1600f, 900f);
 
         static MapViewportModel CreateModel(float contentAspect = 2f, MapFitMode fitMode = MapFitMode.Fit)
         {
@@ -13,7 +13,7 @@ namespace Maps.Tests
             model.SetZoomLimits(1f, 4f);
             model.SetFitMode(fitMode);
             model.SetContentAspect(contentAspect);
-            model.SetViewportSize(Viewport);
+            model.SetViewportSize(k_Viewport);
             return model;
         }
 
@@ -157,7 +157,7 @@ namespace Maps.Tests
             var centeredPoint = new Vector2(0.3f, 0.7f);
             model.CenterOn(centeredPoint);
 
-            model.SetViewportSize(Viewport * 0.5f);
+            model.SetViewportSize(k_Viewport * 0.5f);
 
             AssertApproximately(centeredPoint, model.ViewportToNormalized(Vector2.zero));
         }

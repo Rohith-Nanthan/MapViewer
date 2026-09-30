@@ -12,36 +12,36 @@ namespace Maps.Samples
     /// </summary>
     public sealed class MapMenuExample : MonoBehaviour
     {
-        [SerializeField] MapViewer mapViewer;
+        [SerializeField] MapViewer m_MapViewer;
 
         [Tooltip("Menu content hidden while the map is open.")]
-        [SerializeField] GameObject menu;
+        [SerializeField] GameObject m_Menu;
 
         [Tooltip("Selected when the menu shows, so a gamepad can open the map again.")]
-        [SerializeField] Selectable firstSelected;
+        [SerializeField] Selectable m_FirstSelected;
 
-        [SerializeField] InputAction closeMap = CreateButton("Close Map", "<Keyboard>/escape", "<Gamepad>/buttonEast");
-        [SerializeField] InputAction toggleMap = CreateButton("Toggle Map", "<Keyboard>/m", "<Gamepad>/select");
+        [SerializeField] InputAction m_CloseMap = CreateButton("Close Map", "<Keyboard>/escape", "<Gamepad>/buttonEast");
+        [SerializeField] InputAction m_ToggleMap = CreateButton("Toggle Map", "<Keyboard>/m", "<Gamepad>/select");
 
-        IMapViewer Map => mapViewer;
+        IMapViewer Map => m_MapViewer;
 
         void OnEnable()
         {
             Map.EnabledChanged += OnMapEnabledChanged;
-            closeMap.performed += OnCloseMap;
-            toggleMap.performed += OnToggleMap;
-            closeMap.Enable();
-            toggleMap.Enable();
+            m_CloseMap.performed += OnCloseMap;
+            m_ToggleMap.performed += OnToggleMap;
+            m_CloseMap.Enable();
+            m_ToggleMap.Enable();
             OnMapEnabledChanged(Map.IsEnabled);
         }
 
         void OnDisable()
         {
             Map.EnabledChanged -= OnMapEnabledChanged;
-            closeMap.performed -= OnCloseMap;
-            toggleMap.performed -= OnToggleMap;
-            closeMap.Disable();
-            toggleMap.Disable();
+            m_CloseMap.performed -= OnCloseMap;
+            m_ToggleMap.performed -= OnToggleMap;
+            m_CloseMap.Disable();
+            m_ToggleMap.Disable();
         }
 
         void OnCloseMap(InputAction.CallbackContext context)
@@ -50,16 +50,16 @@ namespace Maps.Samples
                 Map.Disable();
         }
 
-        void OnToggleMap(InputAction.CallbackContext context) => mapViewer.Toggle();
+        void OnToggleMap(InputAction.CallbackContext context) => m_MapViewer.Toggle();
 
         void OnMapEnabledChanged(bool mapEnabled)
         {
-            if (menu != null)
-                menu.SetActive(!mapEnabled);
+            if (m_Menu != null)
+                m_Menu.SetActive(!mapEnabled);
 
             EventSystem eventSystem = EventSystem.current;
             if (eventSystem != null)
-                eventSystem.SetSelectedGameObject(!mapEnabled && firstSelected != null ? firstSelected.gameObject : null);
+                eventSystem.SetSelectedGameObject(!mapEnabled && m_FirstSelected != null ? m_FirstSelected.gameObject : null);
         }
 
         static InputAction CreateButton(string name, params string[] bindings)
