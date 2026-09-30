@@ -11,14 +11,13 @@ namespace Maps
     sealed class MapViewerEditor : Editor
     {
         static bool s_ShowSettings = true;
-        static bool s_ShowEvents;
 
         SerializedProperty _mapSprite;
         SerializedProperty _settings;
         SerializedProperty _resetViewOnEnable;
         SerializedProperty _view;
-        SerializedProperty _onEnabled;
-        SerializedProperty _onDisabled;
+        SerializedProperty _input;
+        SerializedProperty _events;
         Editor _settingsEditor;
 
         void OnEnable()
@@ -27,8 +26,8 @@ namespace Maps
             _settings = serializedObject.FindProperty("m_Settings");
             _resetViewOnEnable = serializedObject.FindProperty("m_ResetViewOnEnable");
             _view = serializedObject.FindProperty("m_View");
-            _onEnabled = serializedObject.FindProperty("m_OnEnabled");
-            _onDisabled = serializedObject.FindProperty("m_OnDisabled");
+            _input = serializedObject.FindProperty("m_Input");
+            _events = serializedObject.FindProperty("m_Events");
         }
 
         void OnDisable() => DestroyImmediate(_settingsEditor);
@@ -45,14 +44,9 @@ namespace Maps
 
             EditorGUILayout.PropertyField(_resetViewOnEnable);
             DrawSettings();
+            EditorGUILayout.PropertyField(_input, true);
             DrawView();
-
-            s_ShowEvents = EditorGUILayout.Foldout(s_ShowEvents, "Events", true);
-            if (s_ShowEvents)
-            {
-                EditorGUILayout.PropertyField(_onEnabled);
-                EditorGUILayout.PropertyField(_onDisabled);
-            }
+            EditorGUILayout.PropertyField(_events, true);
 
             serializedObject.ApplyModifiedProperties();
 

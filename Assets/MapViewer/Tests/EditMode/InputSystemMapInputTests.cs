@@ -10,8 +10,7 @@ namespace Maps.Tests
     /// <summary>Drives virtual devices through the shipped bindings to check what the map receives.</summary>
     public class InputSystemMapInputTests : InputTestFixture
     {
-        const string ControlsPath = "Assets/MapViewer/Input/MapViewerControls.inputactions";
-        static readonly string[] ActionNames = { "Pan", "Zoom", "ZoomStep", "Drag", "Point" };
+        const string k_ControlsPath = "Assets/MapViewer/Input/MapViewerControls.inputactions";
 
         readonly List<Object> _createdObjects = new List<Object>();
         readonly List<InputSystemMapInput> _inputs = new List<InputSystemMapInput>();
@@ -27,7 +26,7 @@ namespace Maps.Tests
             _mouse = InputSystem.AddDevice<Mouse>();
 
             // A copy of the shipped asset tests the real bindings without mutating the asset itself.
-            _controls = Track(Object.Instantiate(AssetDatabase.LoadAssetAtPath<InputActionAsset>(ControlsPath)));
+            _controls = Track(Object.Instantiate(AssetDatabase.LoadAssetAtPath<InputActionAsset>(k_ControlsPath)));
             _input = CreateInput();
         }
 
@@ -44,19 +43,14 @@ namespace Maps.Tests
 
         InputSystemMapInput CreateInput()
         {
-            var input = Track(new GameObject("Map Input")).AddComponent<InputSystemMapInput>();
-            var serializedInput = new SerializedObject(input);
-            foreach (string actionName in ActionNames)
-            {
-                string field = char.ToLowerInvariant(actionName[0]) + actionName.Substring(1);
-                InputAction action = _controls.FindAction($"Map/{actionName}", throwIfNotFound: true);
-                serializedInput.FindProperty(field).objectReferenceValue = Track(InputActionReference.Create(action));
-            }
-
-            serializedInput.ApplyModifiedPropertiesWithoutUndo();
+            var input = new InputSystemMapInput(Reference("Pan"), Reference("Zoom"), Reference("ZoomStep"),
+                Reference("Drag"), Reference("Point"));
             _inputs.Add(input);
             return input;
         }
+
+        InputActionReference Reference(string actionName) =>
+            Track(InputActionReference.Create(_controls.FindAction($"Map/{actionName}", throwIfNotFound: true)));
 
         T Track<T>(T createdObject) where T : Object
         {

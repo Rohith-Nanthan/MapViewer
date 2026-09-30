@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace Maps
 {
@@ -29,18 +28,17 @@ namespace Maps
         [Tooltip("Return to the default zoom, centered on the map, every time the map is enabled.")]
         [SerializeField] bool m_ResetViewOnEnable = true;
 
+        [Tooltip("Input actions the map reads while enabled. Bindings are edited in the actions asset.")]
+        [SerializeField] InputSystemMapInput m_Input = new InputSystemMapInput();
+
         [Tooltip("UI objects that display the map. The prefab already wires them.")]
         [SerializeField] MapView m_View = new MapView();
 
-        [Tooltip("Invoked after the map is enabled.")]
-        [SerializeField] UnityEvent m_OnEnabled = new UnityEvent();
-
-        [Tooltip("Invoked after the map is disabled.")]
-        [SerializeField] UnityEvent m_OnDisabled = new UnityEvent();
+        [SerializeField] MapViewerEvents m_Events = new MapViewerEvents();
 
         readonly MapViewportModel _model = new MapViewportModel();
         MapNavigationController _controller;
-        IMapInput _input;
+        IMapInput _inputOverride;
         MapViewerSettings _defaultSettings;
         bool _isEnabled;
 
@@ -71,18 +69,21 @@ namespace Maps
             }
         }
 
-        /// <summary>Where the map receives input from. Defaults to the <see cref="IMapInput"/> on this GameObject.</summary>
+        /// <summary>
+        /// Where the map reads input from. Defaults to the Input System actions set in the Inspector; assign
+        /// another <see cref="IMapInput"/> (e.g. a replay), or null to go back to the default.
+        /// </summary>
         public IMapInput InputSource
         {
-            get => _input;
+            get => _inputOverride ?? m_Input;
             set
             {
                 if (_isEnabled)
-                    _input?.Disable();
+                    InputSource.Disable();
 
-                _input = value ?? NullMapInput.Instance;
+                _inputOverride = value;
                 if (_isEnabled)
-                    _input.Enable();
+                    InputSource.Enable();
             }
         }
 
@@ -91,6 +92,9 @@ namespace Maps
 
         /// <summary>UI presentation of the map. Its viewport can host overlays such as markers.</summary>
         public MapView View => m_View;
+
+        /// <summary>Inspector-assignable callbacks raised when the map is enabled or disabled.</summary>
+        public MapViewerEvents Events => m_Events;
 
         MapViewerSettings ActiveSettings
         {
@@ -160,9 +164,9 @@ namespace Maps
             if (m_ResetViewOnEnable)
                 ResetView();
 
-            _input.Enable();
+            InputSource.Enable();
             _isEnabled = true;
-            m_OnEnabled.Invoke();
+            m_Events.OnEnabled.Invoke();
             EnabledChanged?.Invoke(true);
         }
 
@@ -171,10 +175,10 @@ namespace Maps
             if (!_isEnabled)
                 return;
 
-            _input.Disable();
+            InputSource.Disable();
             _controller.Stop();
             _isEnabled = false;
-            m_OnDisabled.Invoke();
+            m_Events.OnDisabled.Invoke();
             EnabledChanged?.Invoke(false);
         }
 
@@ -192,7 +196,7 @@ namespace Maps
         void Update()
         {
             Sync();
-            _controller.Tick(_input.ReadFrame(), Mathf.Min(Time.unscaledDeltaTime, k_MaxDeltaTime));
+            _controller.Tick(InputSource.ReadFrame(), Mathf.Min(Time.unscaledDeltaTime, k_MaxDeltaTime));
             Render();
         }
 
@@ -207,9 +211,6 @@ namespace Maps
                 enabled = false;
                 return false;
             }
-
-            if (_input == null)
-                _input = TryGetComponent(out IMapInput input) ? input : NullMapInput.Instance;
 
             m_View.SetSprite(m_MapSprite);
             _controller = new MapNavigationController(_model, m_View, ActiveSettings);
@@ -261,15 +262,5 @@ namespace Maps
             Refresh();
         }
 #endif
-
-        sealed class NullMapInput : IMapInput
-        {
-            public static readonly NullMapInput Instance = new NullMapInput();
-
-            public bool IsEnabled => false;
-            public void Enable() { }
-            public void Disable() { }
-            public MapInputFrame ReadFrame() => default;
-        }
     }
 }

@@ -46,7 +46,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7311399327363679224}
   - component: {fileID: 7511149421211407169}
-  - component: {fileID: 1004319354488457316}
   m_Layer: 0
   m_Name: MapViewer
   m_TagString: Untagged
@@ -89,34 +88,24 @@ MonoBehaviour:
   m_MapSprite: {fileID: 0}
   m_Settings: {fileID: 11400000, guid: eb774ba2cb9ef7c40992f5629f9c574c, type: 2}
   m_ResetViewOnEnable: 1
+  m_Input:
+    m_Pan: {fileID: 4649269667180576656, guid: f3c6e501c3262814aad22c32205e3701, type: 3}
+    m_Zoom: {fileID: -2249237134898556301, guid: f3c6e501c3262814aad22c32205e3701, type: 3}
+    m_ZoomStep: {fileID: -7833537985956016923, guid: f3c6e501c3262814aad22c32205e3701, type: 3}
+    m_Drag: {fileID: -6023988391343499592, guid: f3c6e501c3262814aad22c32205e3701, type: 3}
+    m_Point: {fileID: -2250218054569744237, guid: f3c6e501c3262814aad22c32205e3701, type: 3}
   m_View:
     m_Viewport: {fileID: 1427593104990959848}
     m_Content: {fileID: 8161719631957052336}
     m_MapImage: {fileID: 8784964240784429630}
     m_MapFitter: {fileID: 952707764592455853}
-  m_OnEnabled:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnDisabled:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &1004319354488457316
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2501065364539177293}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef0ea1346fe81a54fb8662ab61578194, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Maps.Runtime::Maps.InputSystemMapInput
-  pan: {fileID: 4649269667180576656, guid: f3c6e501c3262814aad22c32205e3701, type: 3}
-  zoom: {fileID: -2249237134898556301, guid: f3c6e501c3262814aad22c32205e3701, type: 3}
-  zoomStep: {fileID: -7833537985956016923, guid: f3c6e501c3262814aad22c32205e3701, type: 3}
-  drag: {fileID: -6023988391343499592, guid: f3c6e501c3262814aad22c32205e3701, type: 3}
-  point: {fileID: -2250218054569744237, guid: f3c6e501c3262814aad22c32205e3701, type: 3}
+  m_Events:
+    m_OnEnabled:
+      m_PersistentCalls:
+        m_Calls: []
+    m_OnDisabled:
+      m_PersistentCalls:
+        m_Calls: []
 --- !u!1 &3662043815357401522
 GameObject:
   m_ObjectHideFlags: 0
