@@ -187,6 +187,30 @@ namespace POI.Tests
         }
 
         [Test]
+        public void Add_BeforeViewportIsAssigned_ShowsOnceItIs()
+        {
+            var settings = new ScreenMarkerSettings(null, _screen.Settings.Template);
+            var tracker = new ScreenMarkerTracker(settings);
+            try
+            {
+                FakePointOfInterest poi = CreatePoint(new Vector3(0f, 0f, 10f));
+                tracker.Add(poi);
+                tracker.Update(new POIViewContext(_camera, Vector3.zero));
+                Assert.That(tracker.Count, Is.EqualTo(0));
+
+                settings.Viewport = _screenViewport;
+                tracker.Update(new POIViewContext(_camera, Vector3.zero));
+
+                Assert.That(tracker.TryGetMarker(poi, out POI_Marker marker), Is.True);
+                Assert.That(marker.IsVisible, Is.True);
+            }
+            finally
+            {
+                tracker.Dispose();
+            }
+        }
+
+        [Test]
         public void Hide_HidesMarkersUntilTheNextUpdate()
         {
             POI_Marker marker = Place(_screen, CreatePoint(new Vector3(0f, 0f, 10f)));

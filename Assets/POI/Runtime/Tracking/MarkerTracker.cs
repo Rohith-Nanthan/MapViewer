@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,6 +11,9 @@ namespace POI
     public abstract class MarkerTracker : IPOITracker
     {
         readonly MarkerSet _markers = new MarkerSet();
+
+        // Points added before the viewport and template are assigned; their markers are made once they are.
+        readonly List<IPointOfInterest> _pending = new List<IPointOfInterest>();
         bool _isLayoutDirty = true;
 
         /// <summary>Rectangle the markers move within, or null while it is not set up.</summary>
@@ -27,7 +31,7 @@ namespace POI
         /// <summary>Camera that renders the viewport's canvas, or null for Screen Space - Overlay.</summary>
         protected Camera CanvasCamera { get; private set; }
 
-        /// <summary>Number of points of interest shown.</summary>
+        /// <summary>Number of points of interest that have a marker.</summary>
         public int Count => _markers.Count;
 
         /// <summary>Whether both the viewport and the template are assigned.</summary>
@@ -37,25 +41,49 @@ namespace POI
 
         public void Add(IPointOfInterest poi)
         {
+            if (poi == null)
+                throw new ArgumentNullException(nameof(poi));
+
             if (IsValid)
                 _markers.Add(poi, Template, Viewport);
+            else if (!_pending.Contains(poi))
+                _pending.Add(poi);
         }
 
-        public void Remove(IPointOfInterest poi) => _markers.Remove(poi);
+        public void Remove(IPointOfInterest poi)
+        {
+            _pending.Remove(poi);
+            _markers.Remove(poi);
+        }
 
-        public void Clear() => _markers.Clear();
+        public void Clear()
+        {
+            _pending.Clear();
+            _markers.Clear();
+        }
 
         public void Hide() => _markers.HideAll();
 
         public void RefreshLayout() => _isLayoutDirty = true;
 
-        public void Dispose() => _markers.Dispose();
+        public void Dispose()
+        {
+            _pending.Clear();
+            _markers.Dispose();
+        }
 
         public void Update(in POIViewContext context)
         {
-            RectTransform viewport = Viewport;
-            if (_markers.Count == 0 || viewport == null)
+            if (!IsValid)
                 return;
+
+            if (_pending.Count > 0)
+                AddPending();
+
+            if (_markers.Count == 0)
+                return;
+
+            RectTransform viewport = Viewport;
 
             if (_isLayoutDirty)
                 ReadLayout(viewport);
@@ -68,6 +96,13 @@ namespace POI
         /// reaches around the position it is given.
         /// </summary>
         protected abstract void PlaceMarkers(in POIViewContext context, RectTransform viewport);
+
+        void AddPending()
+        {
+            foreach (IPointOfInterest poi in _pending)
+                _markers.Add(poi, Template, Viewport);
+            _pending.Clear();
+        }
 
         void ReadLayout(RectTransform viewport)
         {
