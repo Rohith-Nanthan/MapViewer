@@ -26,9 +26,23 @@ namespace POI
 
         public RectTransform RectTransform => (RectTransform)transform;
 
-        public Image Icon => m_Icon;
+        /// <summary>Image that shows the icon. Set it when building a marker in code; the Inspector fills it in on its own.</summary>
+        public Image Icon
+        {
+            get => m_Icon;
+            set => m_Icon = value;
+        }
 
-        public TMP_Text DistanceLabel => m_DistanceLabel;
+        /// <summary>Optional text that shows the distance, or null for none.</summary>
+        public TMP_Text DistanceLabel
+        {
+            get => m_DistanceLabel;
+            set
+            {
+                m_DistanceLabel = value;
+                _shownDistance = int.MinValue;
+            }
+        }
 
         public bool IsVisible => gameObject.activeSelf;
 
