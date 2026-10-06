@@ -1,19 +1,11 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using UnityEngine;
 
 namespace POI.Tests
 {
     public class POIRegistryTests
     {
-        sealed class FakePointOfInterest : IPointOfInterest
-        {
-            public Sprite Icon => null;
-
-            public Vector3 Position => Vector3.zero;
-        }
-
         readonly List<IPointOfInterest> _added = new List<IPointOfInterest>();
         readonly List<IPointOfInterest> _removed = new List<IPointOfInterest>();
         POIRegistry _registry;
