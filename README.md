@@ -6,6 +6,10 @@ show and hide it, so it slots into a main menu or pause menu.
 
 ![Unity 6000.3](https://img.shields.io/badge/Unity-6000.3-black) ![Input System 1.20](https://img.shields.io/badge/Input%20System-1.20-blue) ![uGUI 2.0](https://img.shields.io/badge/uGUI-2.0-blue)
 
+This repository also contains **POI**, drop-in points of interest: put **POI World** on any object and call
+`Activate()` to show its icon on screen, hugging the screen's edge while out of view, and on a compass with its
+distance from the player. It is independent of the Map Viewer; see [`Assets/POI/README.md`](Assets/POI/README.md).
+
 ## Quick start
 
 1. Open `Assets/MapViewer/Samples/Scenes/MapViewerDemo.unity` and press Play.
