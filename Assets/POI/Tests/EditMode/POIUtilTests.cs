@@ -56,6 +56,22 @@ namespace POI.Tests
         }
 
         [Test]
+        public void GetPivotBounds_EdgePadding_InsetsEachEdgeByItsOwnAmount()
+        {
+            Rect fromPadding = POIUtil.GetPivotBounds(k_Area, k_IconExtents, new EdgePadding(10f, 20f, 40f, 30f));
+
+            Assert.That(fromPadding, Is.EqualTo(POIUtil.GetPivotBounds(k_Area, k_IconExtents, 10f, 20f, 30f, 40f)));
+        }
+
+        [Test]
+        public void EdgePadding_TreatsNegativeValuesAsZero()
+        {
+            var padding = new EdgePadding(-5f, 3f, -1f, 2f);
+
+            Assert.That(padding, Is.EqualTo(new EdgePadding(0f, 3f, 0f, 2f)));
+        }
+
+        [Test]
         public void GetPivotBounds_OffCenterPivot_KeepsWholeElementInside()
         {
             // Pivot at the left edge of a 100 wide element.
@@ -72,7 +88,7 @@ namespace POI.Tests
         {
             var area = new Rect(-25f, -25f, 50f, 50f);
 
-            Rect bounds = POIUtil.GetPivotBounds(area, k_IconExtents, new RectOffset(0, 0, 0, 0));
+            Rect bounds = POIUtil.GetPivotBounds(area, k_IconExtents, new EdgePadding(0f));
 
             AssertApproximately(Vector2.zero, bounds.min);
             AssertApproximately(Vector2.zero, bounds.max);

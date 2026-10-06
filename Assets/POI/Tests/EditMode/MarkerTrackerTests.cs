@@ -54,7 +54,7 @@ namespace POI.Tests
 
             _screen = new ScreenMarkerTracker(new ScreenMarkerSettings(_screenViewport, screenTemplate)
             {
-                Padding = new RectOffset(k_Padding, k_Padding, k_Padding, k_Padding),
+                Padding = new EdgePadding(k_Padding),
             });
             _compass = new CompassMarkerTracker(new CompassMarkerSettings(_compassViewport, compassTemplate)
             {

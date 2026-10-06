@@ -17,7 +17,7 @@ namespace POI
         [SerializeField] POI_Marker m_Template;
 
         [Tooltip("Space kept between the markers and each edge of the viewport, in canvas units.")]
-        [SerializeField] RectOffset m_Padding = new RectOffset(16, 16, 16, 16);
+        [SerializeField] EdgePadding m_Padding = new EdgePadding(16f);
 
         [Tooltip("Text for markers that have a distance label. {0} is the distance from the player in whole meters.")]
         [SerializeField] string m_DistanceFormat = POIUtil.DefaultDistanceFormat;
@@ -44,10 +44,10 @@ namespace POI
             set => m_Template = value;
         }
 
-        public RectOffset Padding
+        public EdgePadding Padding
         {
             get => m_Padding;
-            set => m_Padding = value ?? throw new ArgumentNullException(nameof(value));
+            set => m_Padding = value;
         }
 
         public string DistanceFormat

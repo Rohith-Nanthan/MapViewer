@@ -96,8 +96,8 @@ namespace POI
         }
 
         /// <inheritdoc cref="GetPivotBounds(Rect, Rect, float, float, float, float)"/>
-        public static Rect GetPivotBounds(Rect area, Rect extents, RectOffset padding) =>
-            GetPivotBounds(area, extents, padding.left, padding.right, padding.bottom, padding.top);
+        public static Rect GetPivotBounds(Rect area, Rect extents, EdgePadding padding) =>
+            GetPivotBounds(area, extents, padding.Left, padding.Right, padding.Bottom, padding.Top);
 
         /// <summary>Whether a point lies inside a rectangle or on its edge.</summary>
         public static bool Contains(Rect rect, Vector2 point) =>
