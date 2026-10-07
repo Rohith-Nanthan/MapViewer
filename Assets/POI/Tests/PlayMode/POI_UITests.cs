@@ -216,6 +216,26 @@ namespace POI.Tests
         }
 
         [UnityTest]
+        public IEnumerator DestroyedPointThatNeverRemovedItself_LosesItsMarkers()
+        {
+            var leaky = Track(new GameObject("Leaky POI")).AddComponent<LeakyPointOfInterest>();
+            leaky.Icon = _sprite;
+            leaky.transform.position = new Vector3(0f, 0f, 10f);
+            POIRegistry.Default.Add(leaky);
+            yield return null;
+            Assert.That(ScreenMarker(leaky).IsVisible, Is.True);
+
+            Object.Destroy(leaky.gameObject);
+            yield return null;
+            yield return null;
+
+            Assert.That(POIRegistry.Default.Contains(leaky), Is.False);
+            Assert.That(_ui.ScreenTracker.Count, Is.EqualTo(0));
+            Assert.That(_ui.CompassTracker.Count, Is.EqualTo(0));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
         public IEnumerator PointBehindTheCamera_HugsTheBottomEdgeInsideThePadding()
         {
             POI_World poi = CreatePoint(new Vector3(0f, 0f, -10f));

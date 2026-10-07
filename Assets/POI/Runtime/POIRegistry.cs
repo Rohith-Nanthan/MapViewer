@@ -55,6 +55,19 @@ namespace POI
             return true;
         }
 
+        public void RemoveDestroyed()
+        {
+            for (int i = _items.Count - 1; i >= 0; i--)
+            {
+                IPointOfInterest poi = _items[i];
+                if (poi is UnityEngine.Object unityObject && unityObject == null)
+                {
+                    _items.RemoveAt(i);
+                    Removed?.Invoke(poi);
+                }
+            }
+        }
+
         // Statics survive between Play Mode sessions when Enter Play Mode Options skip the domain reload,
         // so every session starts with an empty registry.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

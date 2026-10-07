@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace POI.Tests
 {
@@ -67,6 +69,21 @@ namespace POI.Tests
             Assert.That(_registry.Remove(new FakePointOfInterest()), Is.False);
             Assert.That(_registry.Remove(null), Is.False);
             Assert.That(_removed, Is.Empty);
+        }
+
+        [Test]
+        public void RemoveDestroyed_DropsDestroyedObjectsAndRaisesRemoved()
+        {
+            var destroyed = ScriptableObject.CreateInstance<DestroyablePointOfInterest>();
+            var alive = new FakePointOfInterest();
+            _registry.Add(destroyed);
+            _registry.Add(alive);
+            Object.DestroyImmediate(destroyed);
+
+            _registry.RemoveDestroyed();
+
+            Assert.That(_registry.Items, Is.EqualTo(new IPointOfInterest[] { alive }));
+            Assert.That(_removed.Count, Is.EqualTo(1));
         }
 
         [Test]

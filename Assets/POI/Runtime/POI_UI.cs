@@ -90,6 +90,9 @@ namespace POI
 
         void LateUpdate()
         {
+            // A point destroyed without removing itself would otherwise keep its markers.
+            _subscribedRegistry.RemoveDestroyed();
+
             // The Inspector can replace the settings objects, so the trackers are handed the current ones.
             _screenTracker.Settings = m_Screen;
             _compassTracker.Settings = m_Compass;

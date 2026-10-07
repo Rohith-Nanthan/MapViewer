@@ -38,7 +38,7 @@ namespace POI
                 return marker;
 
             marker = Rent(template, viewport);
-            marker.name = poi is Object source ? $"{template.name} ({source.name})" : template.name;
+            marker.name = poi is Object source && source != null ? $"{template.name} ({source.name})" : template.name;
             _markers[poi] = marker;
             return marker;
         }
