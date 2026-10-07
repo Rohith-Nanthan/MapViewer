@@ -175,7 +175,7 @@ namespace POI.Tests
             POI_World poi = CreatePoint(new Vector3(0f, 0f, 10f));
             poi.Activate();
             yield return null;
-            Assert.That(_ui.ScreenTracker.Count, Is.EqualTo(0));
+            Assert.That(_ui.ScreenTracker.MarkerCount, Is.EqualTo(0));
 
             _ui.enabled = true;
             yield return null;
@@ -211,8 +211,8 @@ namespace POI.Tests
             Object.Destroy(poi.gameObject);
             yield return null;
 
-            Assert.That(_ui.ScreenTracker.Count, Is.EqualTo(0));
-            Assert.That(_ui.CompassTracker.Count, Is.EqualTo(0));
+            Assert.That(_ui.ScreenTracker.MarkerCount, Is.EqualTo(0));
+            Assert.That(_ui.CompassTracker.MarkerCount, Is.EqualTo(0));
         }
 
         [UnityTest]
@@ -230,8 +230,8 @@ namespace POI.Tests
             yield return null;
 
             Assert.That(POIRegistry.Default.Contains(leaky), Is.False);
-            Assert.That(_ui.ScreenTracker.Count, Is.EqualTo(0));
-            Assert.That(_ui.CompassTracker.Count, Is.EqualTo(0));
+            Assert.That(_ui.ScreenTracker.MarkerCount, Is.EqualTo(0));
+            Assert.That(_ui.CompassTracker.MarkerCount, Is.EqualTo(0));
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -264,18 +264,18 @@ namespace POI.Tests
                 yield return null;
 
                 Transform cameraTransform = _camera.transform;
-                Vector3 heading = POIUtil.GetHeading(cameraTransform.forward, cameraTransform.up, Vector3.up);
-                float bearing = POIUtil.GetBearing(heading, poi.Position - cameraTransform.position, Vector3.up);
-                float expected = Mathf.Clamp(POIUtil.BearingToOffset(bearing, 180f, k_CompassWidth), -maxOffset, maxOffset);
+                Vector3 heading = POIMath.GetHeading(cameraTransform.forward, cameraTransform.up, Vector3.up);
+                float bearing = POIMath.GetBearing(heading, poi.Position - cameraTransform.position, Vector3.up);
+                float expected = Mathf.Clamp(POIMath.BearingToOffset(bearing, 180f, k_CompassWidth), -maxOffset, maxOffset);
                 Assert.That(LocalPosition(CompassMarker(poi)).x, Is.EqualTo(expected).Within(0.01f), $"compass, frame {frame}");
 
                 // Where the screen marker belongs for the camera's pose now, not the pose before it turned.
                 POI_Marker screen = ScreenMarker(poi);
-                Rect pivotBounds = POIUtil.GetPivotBounds(_screenViewport.rect, POIUtil.GetBoundsAroundPivot(screen.RectTransform),
+                Rect allowedPivotArea = POIMath.GetAllowedPivotArea(_screenViewport.rect, POIMath.GetBoundsAroundPivot(screen.RectTransform),
                     _ui.ScreenSettings.Padding);
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(_screenViewport, POIUtil.GetScreenTarget(_camera, poi.Position),
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(_screenViewport, POIMath.ProjectToScreen(_camera, poi.Position),
                     null, out Vector2 target);
-                Assert.That(Vector2.Distance(POIUtil.ClampTowards(pivotBounds, target), LocalPosition(screen)), Is.LessThan(0.01f),
+                Assert.That(Vector2.Distance(POIMath.ClampTowardCenter(allowedPivotArea, target), LocalPosition(screen)), Is.LessThan(0.01f),
                     $"screen, frame {frame}");
             }
         }

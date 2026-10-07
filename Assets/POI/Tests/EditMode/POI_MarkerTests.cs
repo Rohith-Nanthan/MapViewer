@@ -74,6 +74,17 @@ namespace POI.Tests
         }
 
         [Test]
+        public void IsValidDistanceFormat_AcceptsFormatsWithOneArgument()
+        {
+            Assert.That(POI_Marker.IsValidDistanceFormat(POI_Marker.DefaultDistanceFormat), Is.True);
+            Assert.That(POI_Marker.IsValidDistanceFormat("{0:N0}m"), Is.True);
+            Assert.That(POI_Marker.IsValidDistanceFormat(string.Empty), Is.True);
+            Assert.That(POI_Marker.IsValidDistanceFormat("{1} m"), Is.False);
+            Assert.That(POI_Marker.IsValidDistanceFormat("{0 m"), Is.False);
+            Assert.That(POI_Marker.IsValidDistanceFormat(null), Is.False);
+        }
+
+        [Test]
         public void SetLocalPosition_MovesPivotAndKeepsDepth()
         {
             _root.transform.localPosition = new Vector3(0f, 0f, 5f);

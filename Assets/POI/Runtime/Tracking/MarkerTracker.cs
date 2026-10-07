@@ -32,10 +32,10 @@ namespace POI
         protected Camera CanvasCamera { get; private set; }
 
         /// <summary>Number of points of interest that have a marker.</summary>
-        public int Count => _markers.Count;
+        public int MarkerCount => _markers.Count;
 
         /// <summary>Whether both the viewport and the template are assigned.</summary>
-        public bool IsValid => Viewport != null && Template != null;
+        public bool IsConfigured => Viewport != null && Template != null;
 
         public bool TryGetMarker(IPointOfInterest poi, out POI_Marker marker) => _markers.TryGet(poi, out marker);
 
@@ -44,7 +44,7 @@ namespace POI
             if (poi == null)
                 throw new ArgumentNullException(nameof(poi));
 
-            if (IsValid)
+            if (IsConfigured)
                 _markers.Add(poi, Template, Viewport);
             else if (!_pending.Contains(poi))
                 _pending.Add(poi);
@@ -74,7 +74,7 @@ namespace POI
 
         public void Update(in POIViewContext context)
         {
-            if (!IsValid)
+            if (!IsConfigured)
                 return;
 
             if (_pending.Count > 0)
@@ -106,7 +106,7 @@ namespace POI
 
         void ReadLayout(RectTransform viewport)
         {
-            CanvasCamera = POIUtil.GetCanvasCamera(viewport);
+            CanvasCamera = GetCanvasCamera(viewport);
 
             // Every marker is a copy of the same template, so one marker's size stands for all of them. A hidden
             // marker has no size, so it is shown first; it is placed before anything is drawn.
@@ -117,10 +117,21 @@ namespace POI
                     continue;
 
                 marker.SetVisible(true);
-                MarkerBounds = POIUtil.GetBoundsAroundPivot(marker.RectTransform);
+                MarkerBounds = POIMath.GetBoundsAroundPivot(marker.RectTransform);
                 _isLayoutDirty = false;
                 return;
             }
+        }
+
+        // Screen Space - Overlay canvases have no camera, which RectTransformUtility expects as null.
+        static Camera GetCanvasCamera(RectTransform viewport)
+        {
+            Canvas canvas = viewport.GetComponentInParent<Canvas>();
+            if (canvas == null)
+                return null;
+
+            Canvas rootCanvas = canvas.rootCanvas;
+            return rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : rootCanvas.worldCamera;
         }
     }
 }

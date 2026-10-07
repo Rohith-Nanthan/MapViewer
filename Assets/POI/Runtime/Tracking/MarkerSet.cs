@@ -133,8 +133,14 @@ namespace POI
 
         static void DestroyMarker(POI_Marker marker)
         {
-            if (marker != null)
-                POIUtil.DestroyObject(marker.gameObject);
+            if (marker == null)
+                return;
+
+            // Edit Mode tests spawn markers too, and Destroy is only allowed in Play Mode.
+            if (Application.isPlaying)
+                Object.Destroy(marker.gameObject);
+            else
+                Object.DestroyImmediate(marker.gameObject);
         }
     }
 }

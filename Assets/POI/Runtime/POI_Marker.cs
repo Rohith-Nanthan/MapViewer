@@ -1,19 +1,19 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace POI
 {
-    /// <summary>
-    /// One marker in a POI viewport: the image that shows a point of interest's icon, and optionally a label that
-    /// shows its distance. Put it on the template that <see cref="POI_UI"/> copies for each point of interest; the
-    /// template's size, children included, is what is kept inside the viewport.
-    /// </summary>
     [AddComponentMenu("POI/POI Marker")]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(RectTransform))]
     public sealed class POI_Marker : MonoBehaviour
     {
+        public const string DefaultDistanceFormat = "{0} m";
+
+        const int k_NoDistanceShown = int.MinValue;
+
         [Tooltip("Image that shows the point of interest's icon.")]
         [SerializeField] Image m_Icon;
 
@@ -22,25 +22,23 @@ namespace POI
 
         string _distanceFormat;
         bool _isDistanceFormatValid;
-        int _shownDistance = int.MinValue;
+        int _shownDistance = k_NoDistanceShown;
 
         public RectTransform RectTransform => (RectTransform)transform;
 
-        /// <summary>Image that shows the icon. Set it when building a marker in code; the Inspector fills it in on its own.</summary>
         public Image Icon
         {
             get => m_Icon;
             set => m_Icon = value;
         }
 
-        /// <summary>Optional text that shows the distance, or null for none.</summary>
         public TMP_Text DistanceLabel
         {
             get => m_DistanceLabel;
             set
             {
                 m_DistanceLabel = value;
-                _shownDistance = int.MinValue;
+                _shownDistance = k_NoDistanceShown;
             }
         }
 
@@ -49,13 +47,28 @@ namespace POI
         // The template a MarkerSet copied this marker from, so copies are only reused for the same template.
         internal POI_Marker Template { get; set; }
 
+        public static bool IsValidDistanceFormat(string format)
+        {
+            if (format == null)
+                return false;
+
+            try
+            {
+                string.Format(format, 0);
+                return true;
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+        }
+
         public void SetVisible(bool visible)
         {
             if (gameObject.activeSelf != visible)
                 gameObject.SetActive(visible);
         }
 
-        /// <summary>Shows a sprite in the icon image, and hides the image while there is none.</summary>
         public void SetSprite(Sprite sprite)
         {
             if (m_Icon == null)
@@ -69,7 +82,6 @@ namespace POI
                 m_Icon.enabled = hasSprite;
         }
 
-        /// <summary>Moves the marker's pivot to a point in its parent's local space.</summary>
         public void SetLocalPosition(Vector2 position)
         {
             Transform markerTransform = transform;
@@ -81,11 +93,7 @@ namespace POI
                 markerTransform.localPosition = newPosition;
         }
 
-        /// <summary>
-        /// Shows a distance in the label, if there is one. The text is only rebuilt when the whole number of
-        /// meters changes. An invalid format falls back to the plain number.
-        /// </summary>
-        /// <param name="format">Format with {0} for the distance in whole meters, e.g. "{0} m".</param>
+        // The text is rebuilt only when the whole number of meters changes. An invalid format shows the number alone.
         public void SetDistance(float meters, string format)
         {
             if (m_DistanceLabel == null)
@@ -94,16 +102,16 @@ namespace POI
             if (format != _distanceFormat)
             {
                 _distanceFormat = format;
-                _isDistanceFormatValid = POIUtil.IsValidDistanceFormat(format);
-                _shownDistance = int.MinValue;
+                _isDistanceFormatValid = IsValidDistanceFormat(format);
+                _shownDistance = k_NoDistanceShown;
             }
 
-            int rounded = Mathf.RoundToInt(meters);
-            if (rounded == _shownDistance)
+            int roundedMeters = Mathf.RoundToInt(meters);
+            if (roundedMeters == _shownDistance)
                 return;
 
-            _shownDistance = rounded;
-            m_DistanceLabel.text = _isDistanceFormatValid ? string.Format(format, rounded) : rounded.ToString();
+            _shownDistance = roundedMeters;
+            m_DistanceLabel.text = _isDistanceFormatValid ? string.Format(format, roundedMeters) : roundedMeters.ToString();
         }
 
         void Reset()

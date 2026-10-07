@@ -183,7 +183,7 @@ namespace POI.Tests
             _screen.Remove(poi);
 
             Assert.That(marker.IsVisible, Is.False);
-            Assert.That(_screen.Count, Is.EqualTo(0));
+            Assert.That(_screen.MarkerCount, Is.EqualTo(0));
         }
 
         [Test]
@@ -196,7 +196,7 @@ namespace POI.Tests
                 FakePointOfInterest poi = CreatePoint(new Vector3(0f, 0f, 10f));
                 tracker.Add(poi);
                 tracker.Update(new POIViewContext(_camera, Vector3.zero));
-                Assert.That(tracker.Count, Is.EqualTo(0));
+                Assert.That(tracker.MarkerCount, Is.EqualTo(0));
 
                 settings.Viewport = _screenViewport;
                 tracker.Update(new POIViewContext(_camera, Vector3.zero));

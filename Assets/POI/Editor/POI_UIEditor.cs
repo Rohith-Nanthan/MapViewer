@@ -92,7 +92,7 @@ namespace POI
             if (template != null && template.Icon == null)
                 EditorGUILayout.HelpBox("The Template's POI Marker has no Icon image assigned.", MessageType.Warning);
 
-            if (!POIUtil.IsValidDistanceFormat(section.FindPropertyRelative("m_DistanceFormat").stringValue))
+            if (!POI_Marker.IsValidDistanceFormat(section.FindPropertyRelative("m_DistanceFormat").stringValue))
                 EditorGUILayout.HelpBox("Distance Format is not a valid format with {0}; distances will show as plain numbers.", MessageType.Warning);
         }
 
@@ -103,8 +103,8 @@ namespace POI
             using (new EditorGUI.DisabledScope(true))
             {
                 EditorGUILayout.IntField("Active Points", POIRegistry.Default.Count);
-                EditorGUILayout.IntField("Screen Markers", ui.ScreenTracker.Count);
-                EditorGUILayout.IntField("Compass Markers", ui.CompassTracker.Count);
+                EditorGUILayout.IntField("Screen Markers", ui.ScreenTracker.MarkerCount);
+                EditorGUILayout.IntField("Compass Markers", ui.CompassTracker.MarkerCount);
                 EditorGUILayout.ObjectField("Camera In Use", ui.Camera, typeof(Camera), true);
             }
         }

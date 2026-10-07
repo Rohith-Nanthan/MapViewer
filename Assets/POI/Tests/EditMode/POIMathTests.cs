@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace POI.Tests
 {
-    public class POIUtilTests
+    public class POIMathTests
     {
         static readonly Rect k_Area = new Rect(-400f, -300f, 800f, 600f);
         static readonly Rect k_IconExtents = new Rect(-32f, -32f, 64f, 64f);
@@ -45,22 +45,16 @@ namespace POI.Tests
         }
 
         [Test]
-        public void GetPivotBounds_InsetsAreaByExtentsAndPadding()
+        public void GetAllowedPivotArea_InsetsEachEdgeByMarkerBoundsAndItsOwnPadding()
         {
-            Rect bounds = POIUtil.GetPivotBounds(k_Area, k_IconExtents, 10f, 20f, 30f, 40f);
+            var padding = new EdgePadding(left: 10f, right: 20f, top: 40f, bottom: 30f);
 
-            Assert.That(bounds.xMin, Is.EqualTo(-358f).Within(1e-3f));
-            Assert.That(bounds.xMax, Is.EqualTo(348f).Within(1e-3f));
-            Assert.That(bounds.yMin, Is.EqualTo(-238f).Within(1e-3f));
-            Assert.That(bounds.yMax, Is.EqualTo(228f).Within(1e-3f));
-        }
+            Rect area = POIMath.GetAllowedPivotArea(k_Area, k_IconExtents, padding);
 
-        [Test]
-        public void GetPivotBounds_EdgePadding_InsetsEachEdgeByItsOwnAmount()
-        {
-            Rect fromPadding = POIUtil.GetPivotBounds(k_Area, k_IconExtents, new EdgePadding(10f, 20f, 40f, 30f));
-
-            Assert.That(fromPadding, Is.EqualTo(POIUtil.GetPivotBounds(k_Area, k_IconExtents, 10f, 20f, 30f, 40f)));
+            Assert.That(area.xMin, Is.EqualTo(-358f).Within(1e-3f));
+            Assert.That(area.xMax, Is.EqualTo(348f).Within(1e-3f));
+            Assert.That(area.yMin, Is.EqualTo(-238f).Within(1e-3f));
+            Assert.That(area.yMax, Is.EqualTo(228f).Within(1e-3f));
         }
 
         [Test]
@@ -72,111 +66,111 @@ namespace POI.Tests
         }
 
         [Test]
-        public void GetPivotBounds_OffCenterPivot_KeepsWholeElementInside()
+        public void GetAllowedPivotArea_OffCenterPivot_KeepsWholeElementInside()
         {
             // Pivot at the left edge of a 100 wide element.
             var extents = new Rect(0f, -10f, 100f, 20f);
 
-            Rect bounds = POIUtil.GetPivotBounds(k_Area, extents, 0f, 0f, 0f, 0f);
+            Rect bounds = POIMath.GetAllowedPivotArea(k_Area, extents, new EdgePadding(0f, 0f, 0f, 0f));
 
             Assert.That(bounds.xMin, Is.EqualTo(k_Area.xMin).Within(1e-3f));
             Assert.That(bounds.xMax, Is.EqualTo(k_Area.xMax - 100f).Within(1e-3f));
         }
 
         [Test]
-        public void GetPivotBounds_ElementLargerThanArea_IsCentered()
+        public void GetAllowedPivotArea_ElementLargerThanArea_IsCentered()
         {
             var area = new Rect(-25f, -25f, 50f, 50f);
 
-            Rect bounds = POIUtil.GetPivotBounds(area, k_IconExtents, new EdgePadding(0f));
+            Rect bounds = POIMath.GetAllowedPivotArea(area, k_IconExtents, new EdgePadding(0f));
 
             AssertApproximately(Vector2.zero, bounds.min);
             AssertApproximately(Vector2.zero, bounds.max);
         }
 
         [Test]
-        public void ClampTowards_PointInsideOrOnEdge_IsUnchanged()
+        public void ClampTowardCenter_PointInsideOrOnEdge_IsUnchanged()
         {
-            AssertApproximately(new Vector2(10f, -20f), POIUtil.ClampTowards(k_Area, new Vector2(10f, -20f)));
-            AssertApproximately(new Vector2(400f, 300f), POIUtil.ClampTowards(k_Area, new Vector2(400f, 300f)));
+            AssertApproximately(new Vector2(10f, -20f), POIMath.ClampTowardCenter(k_Area, new Vector2(10f, -20f)));
+            AssertApproximately(new Vector2(400f, 300f), POIMath.ClampTowardCenter(k_Area, new Vector2(400f, 300f)));
         }
 
         [Test]
-        public void ClampTowards_PointOutside_LandsOnEdgeInSameDirection()
+        public void ClampTowardCenter_PointOutside_LandsOnEdgeInSameDirection()
         {
             var point = new Vector2(1200f, 300f);
 
-            Vector2 clamped = POIUtil.ClampTowards(k_Area, point);
+            Vector2 clamped = POIMath.ClampTowardCenter(k_Area, point);
 
             AssertApproximately(new Vector2(400f, 100f), clamped);
             AssertApproximately(point.normalized, clamped.normalized);
         }
 
         [Test]
-        public void ClampTowards_PointBeyondCorner_LandsOnFirstEdgeAlongTheLine()
+        public void ClampTowardCenter_PointBeyondCorner_LandsOnFirstEdgeAlongTheLine()
         {
-            AssertApproximately(new Vector2(300f, 300f), POIUtil.ClampTowards(k_Area, new Vector2(900f, 900f)));
+            AssertApproximately(new Vector2(300f, 300f), POIMath.ClampTowardCenter(k_Area, new Vector2(900f, 900f)));
         }
 
         [Test]
-        public void ClampTowards_OffCenterRect_MeasuresFromItsCenter()
+        public void ClampTowardCenter_OffCenterRect_MeasuresFromItsCenter()
         {
             var rect = new Rect(100f, 0f, 200f, 100f);
 
-            AssertApproximately(new Vector2(300f, 50f), POIUtil.ClampTowards(rect, new Vector2(900f, 50f)));
+            AssertApproximately(new Vector2(300f, 50f), POIMath.ClampTowardCenter(rect, new Vector2(900f, 50f)));
         }
 
         [Test]
         public void GetHeading_FlattensForward()
         {
-            AssertApproximately(Vector3.right, POIUtil.GetHeading(new Vector3(1f, 1f, 0f), Vector3.up, Vector3.up));
+            AssertApproximately(Vector3.right, POIMath.GetHeading(new Vector3(1f, 1f, 0f), Vector3.up, Vector3.up));
         }
 
         [Test]
         public void GetHeading_LookingStraightDownOrUp_UsesTheWayTheViewFaced()
         {
             // Pitched down or up from facing +Z, the top of the view points forward or back respectively.
-            AssertApproximately(Vector3.forward, POIUtil.GetHeading(Vector3.down, Vector3.forward, Vector3.up));
-            AssertApproximately(Vector3.forward, POIUtil.GetHeading(Vector3.up, Vector3.back, Vector3.up));
+            AssertApproximately(Vector3.forward, POIMath.GetHeading(Vector3.down, Vector3.forward, Vector3.up));
+            AssertApproximately(Vector3.forward, POIMath.GetHeading(Vector3.up, Vector3.back, Vector3.up));
         }
 
         [Test]
         public void GetBearing_IsPositiveToTheRightAndNegativeToTheLeft()
         {
-            Assert.That(POIUtil.GetBearing(Vector3.forward, Vector3.right, Vector3.up), Is.EqualTo(90f).Within(1e-3f));
-            Assert.That(POIUtil.GetBearing(Vector3.forward, Vector3.left, Vector3.up), Is.EqualTo(-90f).Within(1e-3f));
-            Assert.That(Mathf.Abs(POIUtil.GetBearing(Vector3.forward, Vector3.back, Vector3.up)), Is.EqualTo(180f).Within(1e-3f));
+            Assert.That(POIMath.GetBearing(Vector3.forward, Vector3.right, Vector3.up), Is.EqualTo(90f).Within(1e-3f));
+            Assert.That(POIMath.GetBearing(Vector3.forward, Vector3.left, Vector3.up), Is.EqualTo(-90f).Within(1e-3f));
+            Assert.That(Mathf.Abs(POIMath.GetBearing(Vector3.forward, Vector3.back, Vector3.up)), Is.EqualTo(180f).Within(1e-3f));
         }
 
         [Test]
         public void GetBearing_IgnoresHeightAndIsZeroStraightUp()
         {
-            Assert.That(POIUtil.GetBearing(Vector3.forward, new Vector3(1f, 50f, 1f), Vector3.up), Is.EqualTo(45f).Within(1e-3f));
-            Assert.That(POIUtil.GetBearing(Vector3.forward, Vector3.up, Vector3.up), Is.EqualTo(0f));
+            Assert.That(POIMath.GetBearing(Vector3.forward, new Vector3(1f, 50f, 1f), Vector3.up), Is.EqualTo(45f).Within(1e-3f));
+            Assert.That(POIMath.GetBearing(Vector3.forward, Vector3.up, Vector3.up), Is.EqualTo(0f));
         }
 
         [Test]
-        public void BearingToOffset_MapsFieldOfViewOntoWidth()
+        public void BearingToOffset_MapsDegreesOntoWidth()
         {
-            Assert.That(POIUtil.BearingToOffset(45f, 180f, 900f), Is.EqualTo(225f).Within(1e-3f));
-            Assert.That(POIUtil.BearingToOffset(-90f, 180f, 900f), Is.EqualTo(-450f).Within(1e-3f));
-            Assert.That(POIUtil.BearingToOffset(30f, 0f, 900f), Is.EqualTo(0f));
+            Assert.That(POIMath.BearingToOffset(45f, 180f, 900f), Is.EqualTo(225f).Within(1e-3f));
+            Assert.That(POIMath.BearingToOffset(-90f, 180f, 900f), Is.EqualTo(-450f).Within(1e-3f));
+            Assert.That(POIMath.BearingToOffset(30f, 0f, 900f), Is.EqualTo(0f));
         }
 
         [Test]
-        public void GetScreenTarget_PointInFront_ProjectsOntoScreen()
-        {
-            Camera camera = CreateCamera();
-
-            AssertApproximately(new Vector2(400f, 300f), POIUtil.GetScreenTarget(camera, new Vector3(0f, 0f, 10f)), 0.05f);
-        }
-
-        [Test]
-        public void GetScreenTarget_PointBehindToTheRight_IsFarOffTheRightEdge()
+        public void ProjectToScreen_PointInFront_ProjectsOntoScreen()
         {
             Camera camera = CreateCamera();
 
-            Vector2 target = POIUtil.GetScreenTarget(camera, new Vector3(5f, 0f, -10f));
+            AssertApproximately(new Vector2(400f, 300f), POIMath.ProjectToScreen(camera, new Vector3(0f, 0f, 10f)), 0.05f);
+        }
+
+        [Test]
+        public void ProjectToScreen_PointBehindToTheRight_IsFarOffTheRightEdge()
+        {
+            Camera camera = CreateCamera();
+
+            Vector2 target = POIMath.ProjectToScreen(camera, new Vector3(5f, 0f, -10f));
 
             // Not mirrored to the left, as a raw projection of a point behind the camera would be.
             Assert.That(target.x, Is.GreaterThan(800f * 10f));
@@ -184,23 +178,23 @@ namespace POI.Tests
         }
 
         [Test]
-        public void GetScreenTarget_PointStraightBehind_IsFarBelowTheScreen()
+        public void ProjectToScreen_PointStraightBehind_IsFarBelowTheScreen()
         {
             Camera camera = CreateCamera();
 
-            Vector2 target = POIUtil.GetScreenTarget(camera, new Vector3(0f, 0f, -10f));
+            Vector2 target = POIMath.ProjectToScreen(camera, new Vector3(0f, 0f, -10f));
 
             Assert.That(target.y, Is.LessThan(-600f * 10f));
             Assert.That(target.x, Is.EqualTo(400f).Within(0.05f));
         }
 
         [Test]
-        public void GetScreenTarget_OrthographicCamera_ProjectsPointsBehindItToo()
+        public void ProjectToScreen_OrthographicCamera_ProjectsPointsBehindItToo()
         {
             Camera camera = CreateCamera(orthographic: true);
             Vector3 point = new Vector3(1f, 1f, -5f);
 
-            AssertApproximately((Vector2)camera.WorldToScreenPoint(point), POIUtil.GetScreenTarget(camera, point));
+            AssertApproximately((Vector2)camera.WorldToScreenPoint(point), POIMath.ProjectToScreen(camera, point));
         }
 
         [Test]
@@ -223,7 +217,7 @@ namespace POI.Tests
                 ((RectTransform)hidden.transform).sizeDelta = new Vector2(1000f, 1000f);
                 hidden.SetActive(false);
 
-                Rect bounds = POIUtil.GetBoundsAroundPivot(iconTransform);
+                Rect bounds = POIMath.GetBoundsAroundPivot(iconTransform);
 
                 AssertApproximately(new Vector2(-120f, -104f), bounds.min);
                 AssertApproximately(new Vector2(120f, 64f), bounds.max);
@@ -232,17 +226,6 @@ namespace POI.Tests
             {
                 Object.DestroyImmediate(icon);
             }
-        }
-
-        [Test]
-        public void IsValidDistanceFormat_AcceptsFormatsWithOneArgument()
-        {
-            Assert.That(POIUtil.IsValidDistanceFormat(POIUtil.DefaultDistanceFormat), Is.True);
-            Assert.That(POIUtil.IsValidDistanceFormat("{0:N0}m"), Is.True);
-            Assert.That(POIUtil.IsValidDistanceFormat(string.Empty), Is.True);
-            Assert.That(POIUtil.IsValidDistanceFormat("{1} m"), Is.False);
-            Assert.That(POIUtil.IsValidDistanceFormat("{0 m"), Is.False);
-            Assert.That(POIUtil.IsValidDistanceFormat(null), Is.False);
         }
     }
 }

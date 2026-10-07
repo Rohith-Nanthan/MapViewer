@@ -64,13 +64,13 @@ namespace POI.Samples
             Transform cameraTransform = viewCamera.transform;
             Rect area = m_UI.CompassSettings.Viewport.rect;
             float fieldOfView = m_UI.CompassSettings.FieldOfView;
-            Vector3 heading = POIUtil.GetHeading(cameraTransform.forward, cameraTransform.up, Vector3.up);
+            Vector3 heading = POIMath.GetHeading(cameraTransform.forward, cameraTransform.up, Vector3.up);
 
             for (int i = 0; i < _labels.Length; i++)
             {
                 RectTransform label = _labels[i];
                 Vector3 direction = Quaternion.Euler(0f, i * 360f / k_Directions.Length, 0f) * Vector3.forward;
-                float offset = POIUtil.BearingToOffset(POIUtil.GetBearing(heading, direction, Vector3.up), fieldOfView, area.width);
+                float offset = POIMath.BearingToOffset(POIMath.GetBearing(heading, direction, Vector3.up), fieldOfView, area.width);
 
                 // Directions past the edges are hidden rather than piled up there, unlike the markers.
                 bool isVisible = Mathf.Abs(offset) <= area.width * 0.5f - label.rect.width * 0.5f;

@@ -40,8 +40,8 @@ namespace POI
         {
             Rect area = viewport.rect;
             float padding = _settings.Padding;
-            Rect pivotBounds = POIUtil.GetPivotBounds(area, MarkerBounds, padding, padding, 0f, 0f);
-            Vector3 heading = POIUtil.GetHeading(context.CameraForward, context.CameraUp, Vector3.up);
+            Rect allowedPivotArea = POIMath.GetAllowedPivotArea(area, MarkerBounds, new EdgePadding(padding, padding, 0f, 0f));
+            Vector3 heading = POIMath.GetHeading(context.CameraForward, context.CameraUp, Vector3.up);
 
             foreach (KeyValuePair<IPointOfInterest, POI_Marker> pair in Markers)
             {
@@ -50,14 +50,14 @@ namespace POI
                 if (marker == null)
                     continue;
 
-                float bearing = POIUtil.GetBearing(heading, poi.Position - context.CameraPosition, Vector3.up);
-                float x = area.center.x + POIUtil.BearingToOffset(bearing, _settings.FieldOfView, area.width);
+                float bearing = POIMath.GetBearing(heading, poi.Position - context.CameraPosition, Vector3.up);
+                float x = area.center.x + POIMath.BearingToOffset(bearing, _settings.FieldOfView, area.width);
 
                 // The height comes from the template; it is only clamped so the marker is never cut off.
                 float y = marker.RectTransform.localPosition.y;
                 marker.SetLocalPosition(new Vector2(
-                    Mathf.Clamp(x, pivotBounds.xMin, pivotBounds.xMax),
-                    Mathf.Clamp(y, pivotBounds.yMin, pivotBounds.yMax)));
+                    Mathf.Clamp(x, allowedPivotArea.xMin, allowedPivotArea.xMax),
+                    Mathf.Clamp(y, allowedPivotArea.yMin, allowedPivotArea.yMax)));
                 marker.SetSprite(poi.Icon);
                 marker.SetDistance(Vector3.Distance(context.PlayerPosition, poi.Position), _settings.DistanceFormat);
                 marker.SetVisible(true);

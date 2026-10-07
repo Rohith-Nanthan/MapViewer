@@ -38,7 +38,7 @@ namespace POI
 
         protected override void PlaceMarkers(in POIViewContext context, RectTransform viewport)
         {
-            Rect pivotBounds = POIUtil.GetPivotBounds(viewport.rect, MarkerBounds, _settings.Padding);
+            Rect allowedPivotArea = POIMath.GetAllowedPivotArea(viewport.rect, MarkerBounds, _settings.Padding);
 
             foreach (KeyValuePair<IPointOfInterest, POI_Marker> pair in Markers)
             {
@@ -47,14 +47,14 @@ namespace POI
                 if (marker == null)
                     continue;
 
-                Vector2 screenTarget = POIUtil.GetScreenTarget(context.Camera, poi.Position);
+                Vector2 screenTarget = POIMath.ProjectToScreen(context.Camera, poi.Position);
                 if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(viewport, screenTarget, CanvasCamera, out Vector2 localTarget))
                 {
                     marker.SetVisible(false);
                     continue;
                 }
 
-                marker.SetLocalPosition(POIUtil.ClampTowards(pivotBounds, localTarget));
+                marker.SetLocalPosition(POIMath.ClampTowardCenter(allowedPivotArea, localTarget));
                 marker.SetSprite(poi.Icon);
                 marker.SetDistance(Vector3.Distance(context.PlayerPosition, poi.Position), _settings.DistanceFormat);
                 marker.SetVisible(true);

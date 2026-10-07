@@ -30,7 +30,7 @@ namespace POI
         [SerializeField, Min(0f)] float m_Padding = 8f;
 
         [Tooltip("Text for markers that have a distance label. {0} is the distance from the player in whole meters.")]
-        [SerializeField] string m_DistanceFormat = POIUtil.DefaultDistanceFormat;
+        [SerializeField] string m_DistanceFormat = POI_Marker.DefaultDistanceFormat;
 
         public CompassMarkerSettings()
         {
