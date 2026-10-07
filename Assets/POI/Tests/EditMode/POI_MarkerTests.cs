@@ -40,18 +40,18 @@ namespace POI.Tests
         [Test]
         public void Reset_FindsIconAndDistanceLabel()
         {
-            Assert.That(_marker.Icon, Is.SameAs(_icon));
+            Assert.That(_marker.IconImage, Is.SameAs(_icon));
             Assert.That(_marker.DistanceLabel, Is.SameAs(_label));
         }
 
         [Test]
-        public void SetSprite_ShowsSpriteAndHidesImageWithoutOne()
+        public void SetIcon_ShowsSpriteAndHidesImageWithoutOne()
         {
-            _marker.SetSprite(_sprite);
+            _marker.SetIcon(_sprite);
             Assert.That(_icon.sprite, Is.SameAs(_sprite));
             Assert.That(_icon.enabled, Is.True);
 
-            _marker.SetSprite(null);
+            _marker.SetIcon(null);
             Assert.That(_icon.enabled, Is.False);
         }
 

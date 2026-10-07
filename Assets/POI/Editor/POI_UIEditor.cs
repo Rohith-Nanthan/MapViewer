@@ -89,7 +89,7 @@ namespace POI
             if (viewport != null && viewport.GetComponent<LayoutGroup>() != null)
                 EditorGUILayout.HelpBox("Remove the layout group from the Viewport; it would fight the markers for their positions.", MessageType.Warning);
 
-            if (template != null && template.Icon == null)
+            if (template != null && template.IconImage == null)
                 EditorGUILayout.HelpBox("The Template's POI Marker has no Icon image assigned.", MessageType.Warning);
 
             if (!POI_Marker.IsValidDistanceFormat(section.FindPropertyRelative("m_DistanceFormat").stringValue))

@@ -12,7 +12,7 @@ namespace POI
     public sealed class CompassMarkerSettings
     {
         /// <summary>Widest field of view: the whole way around.</summary>
-        public const float MaxFieldOfView = 360f;
+        const float k_FullCircleDegrees = 360f;
 
         [Tooltip("Rectangle the markers slide along, e.g. over the compass bar. Markers are created as its children " +
                  "and keep the height of the template.")]
@@ -24,7 +24,7 @@ namespace POI
 
         [Tooltip("Degrees of heading the viewport's width spans, centered on where the camera faces. Match your " +
                  "compass graphic, so markers line up with its directions.")]
-        [SerializeField, Range(1f, MaxFieldOfView)] float m_FieldOfView = 180f;
+        [SerializeField, Range(1f, k_FullCircleDegrees)] float m_DegreesAcrossViewport = 180f;
 
         [Tooltip("Space kept between the markers and the left and right edges of the viewport, in canvas units.")]
         [SerializeField, Min(0f)] float m_Padding = 8f;
@@ -54,11 +54,10 @@ namespace POI
             set => m_Template = value;
         }
 
-        /// <summary>Degrees of heading the viewport's width spans, between 1 and <see cref="MaxFieldOfView"/>.</summary>
-        public float FieldOfView
+        public float DegreesAcrossViewport
         {
-            get => m_FieldOfView;
-            set => m_FieldOfView = Mathf.Clamp(value, 1f, MaxFieldOfView);
+            get => m_DegreesAcrossViewport;
+            set => m_DegreesAcrossViewport = Mathf.Clamp(value, 1f, k_FullCircleDegrees);
         }
 
         public float Padding

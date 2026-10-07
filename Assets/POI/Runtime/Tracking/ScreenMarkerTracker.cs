@@ -55,7 +55,7 @@ namespace POI
                 }
 
                 marker.SetLocalPosition(POIMath.ClampTowardCenter(allowedPivotArea, localTarget));
-                marker.SetSprite(poi.Icon);
+                marker.SetIcon(poi.Icon);
                 marker.SetDistance(Vector3.Distance(context.PlayerPosition, poi.Position), _settings.DistanceFormat);
                 marker.SetVisible(true);
             }

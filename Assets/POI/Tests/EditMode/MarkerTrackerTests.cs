@@ -58,7 +58,7 @@ namespace POI.Tests
             });
             _compass = new CompassMarkerTracker(new CompassMarkerSettings(_compassViewport, compassTemplate)
             {
-                FieldOfView = 180f,
+                DegreesAcrossViewport = 180f,
                 Padding = k_CompassPadding,
             });
 
@@ -128,7 +128,7 @@ namespace POI.Tests
             POI_Marker marker = Place(_screen, CreatePoint(new Vector3(0f, 0f, 10f)));
 
             Assert.That(marker.IsVisible, Is.True);
-            Assert.That(marker.Icon.sprite, Is.SameAs(_sprite));
+            Assert.That(marker.IconImage.sprite, Is.SameAs(_sprite));
             AssertApproximately(Vector2.zero, LocalPosition(marker));
         }
 

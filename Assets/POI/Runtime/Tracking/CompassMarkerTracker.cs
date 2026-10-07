@@ -51,14 +51,14 @@ namespace POI
                     continue;
 
                 float bearing = POIMath.GetBearing(heading, poi.Position - context.CameraPosition, Vector3.up);
-                float x = area.center.x + POIMath.BearingToOffset(bearing, _settings.FieldOfView, area.width);
+                float x = area.center.x + POIMath.BearingToOffset(bearing, _settings.DegreesAcrossViewport, area.width);
 
                 // The height comes from the template; it is only clamped so the marker is never cut off.
                 float y = marker.RectTransform.localPosition.y;
                 marker.SetLocalPosition(new Vector2(
                     Mathf.Clamp(x, allowedPivotArea.xMin, allowedPivotArea.xMax),
                     Mathf.Clamp(y, allowedPivotArea.yMin, allowedPivotArea.yMax)));
-                marker.SetSprite(poi.Icon);
+                marker.SetIcon(poi.Icon);
                 marker.SetDistance(Vector3.Distance(context.PlayerPosition, poi.Position), _settings.DistanceFormat);
                 marker.SetVisible(true);
             }

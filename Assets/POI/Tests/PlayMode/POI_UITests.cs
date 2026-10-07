@@ -59,7 +59,7 @@ namespace POI.Tests
             };
             _ui.CompassSettings = new CompassMarkerSettings(compassViewport, compassTemplate)
             {
-                FieldOfView = 180f,
+                DegreesAcrossViewport = 180f,
                 Padding = k_CompassPadding,
             };
             canvasObject.SetActive(true);
@@ -98,7 +98,7 @@ namespace POI.Tests
 
             // Reset only wires the references in the Editor, so they are set explicitly in Play Mode.
             var marker = icon.gameObject.AddComponent<POI_Marker>();
-            marker.Icon = icon.gameObject.AddComponent<Image>();
+            marker.IconImage = icon.gameObject.AddComponent<Image>();
             if (withLabel)
             {
                 RectTransform label = CreateRect("Distance", icon, new Vector2(k_LabelWidth, 24f));
@@ -143,8 +143,8 @@ namespace POI.Tests
             POI_Marker compass = CompassMarker(poi);
             Assert.That(poi.IsActive, Is.True);
             Assert.That(screen.IsVisible && compass.IsVisible, Is.True);
-            Assert.That(screen.Icon.sprite, Is.SameAs(_sprite));
-            Assert.That(compass.Icon.sprite, Is.SameAs(_sprite));
+            Assert.That(screen.IconImage.sprite, Is.SameAs(_sprite));
+            Assert.That(compass.IconImage.sprite, Is.SameAs(_sprite));
             Assert.That(screen.transform.parent, Is.SameAs(_screenViewport));
             Assert.That(LocalPosition(screen).magnitude, Is.LessThan(1f), "straight ahead is the viewport's center");
             Assert.That(LocalPosition(compass).x, Is.EqualTo(0f).Within(0.01f));

@@ -264,7 +264,7 @@ MonoBehaviour:
   m_Compass:
     m_Viewport: {fileID: 1471375329946261136}
     m_Template: {fileID: 2996383729339777611}
-    m_FieldOfView: 180
+    m_DegreesAcrossViewport: 180
     m_Padding: 8
     m_DistanceFormat: '{0} m'
 --- !u!1 &7464797784710919639
@@ -493,7 +493,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a45e9a36eb0ddfb458310ba614e041ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: POI.Runtime::POI.POI_Marker
-  m_Icon: {fileID: 5030130628115011604}
+  m_IconImage: {fileID: 5030130628115011604}
   m_DistanceLabel: {fileID: 878610476638200852}
 --- !u!1 &8662846001459459209
 GameObject:
@@ -583,5 +583,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a45e9a36eb0ddfb458310ba614e041ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: POI.Runtime::POI.POI_Marker
-  m_Icon: {fileID: 7938812146350564943}
+  m_IconImage: {fileID: 7938812146350564943}
   m_DistanceLabel: {fileID: 0}

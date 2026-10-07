@@ -15,7 +15,7 @@ namespace POI
         const int k_NoDistanceShown = int.MinValue;
 
         [Tooltip("Image that shows the point of interest's icon.")]
-        [SerializeField] Image m_Icon;
+        [SerializeField] Image m_IconImage;
 
         [Tooltip("Optional text that shows the distance from the player, e.g. under a compass marker.")]
         [SerializeField] TMP_Text m_DistanceLabel;
@@ -26,10 +26,10 @@ namespace POI
 
         public RectTransform RectTransform => (RectTransform)transform;
 
-        public Image Icon
+        public Image IconImage
         {
-            get => m_Icon;
-            set => m_Icon = value;
+            get => m_IconImage;
+            set => m_IconImage = value;
         }
 
         public TMP_Text DistanceLabel
@@ -69,17 +69,17 @@ namespace POI
                 gameObject.SetActive(visible);
         }
 
-        public void SetSprite(Sprite sprite)
+        public void SetIcon(Sprite sprite)
         {
-            if (m_Icon == null)
+            if (m_IconImage == null)
                 return;
 
-            if (m_Icon.sprite != sprite)
-                m_Icon.sprite = sprite;
+            if (m_IconImage.sprite != sprite)
+                m_IconImage.sprite = sprite;
 
             bool hasSprite = sprite != null;
-            if (m_Icon.enabled != hasSprite)
-                m_Icon.enabled = hasSprite;
+            if (m_IconImage.enabled != hasSprite)
+                m_IconImage.enabled = hasSprite;
         }
 
         public void SetLocalPosition(Vector2 position)
@@ -116,7 +116,7 @@ namespace POI
 
         void Reset()
         {
-            m_Icon = GetComponent<Image>();
+            m_IconImage = GetComponent<Image>();
             m_DistanceLabel = GetComponentInChildren<TMP_Text>(true);
         }
     }
