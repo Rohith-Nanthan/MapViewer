@@ -81,11 +81,12 @@ needs no canvas of its own. Then assign:
 | Screen › Viewport | Your safe-area RectTransform. Screen icons are spawned inside it. |
 | Screen › Marker Prefab | `POI_ScreenMarker`, or your own marker prefab. |
 | Screen › Padding | Space kept from each edge, in canvas units. 16 by default. |
+| Screen › Distance Format | Text for screen markers whose prefab has a Distance Label (`POI_ScreenMarker` has none). `{0} m` by default. |
 | Compass › Viewport | An empty RectTransform inside your compass strip, as wide as the strip and centered on it (see below). |
 | Compass › Marker Prefab | `POI_CompassMarker`, or your own marker prefab. |
 | Compass › Degrees Across Viewport | How many degrees your compass strip spans across its width. 180 by default. |
 | Compass › Padding | Space kept from the left and right edges. 8 by default. |
-| Distance Format | Text of distance labels; `{0}` is whole meters. `{0} m` by default. |
+| Compass › Distance Format | Text of the distance label; `{0}` is whole meters. `{0} m` by default. |
 
 The inspector warns about a missing viewport or prefab, a viewport outside a canvas or with a layout group, a
 scene object used as a marker prefab, and an invalid distance format.

@@ -213,6 +213,21 @@ namespace POI.Tests
         }
 
         [Test]
+        public void Screen_ViewportHiddenAtFirst_KeepsTheMarkerInsideOnceShown()
+        {
+            _screenViewport.gameObject.SetActive(false);
+            FakePointOfInterest poi = CreatePoint(new Vector3(100f, 0f, 10f));
+            _screen.Add(poi);
+            _screen.Update(new POIViewContext(_camera, Vector3.zero));
+
+            _screenViewport.gameObject.SetActive(true);
+            _screen.Update(new POIViewContext(_camera, Vector3.zero));
+
+            Assert.That(_screen.TryGetMarker(poi, out POI_Marker marker), Is.True);
+            AssertApproximately(new Vector2(400f - k_Padding - 32f, 0f), LocalPosition(marker));
+        }
+
+        [Test]
         public void ChangingMarkerPrefab_RespawnsExistingMarkers()
         {
             FakePointOfInterest poi = CreatePoint(new Vector3(0f, 0f, 10f));

@@ -233,6 +233,41 @@ namespace POI.Tests
         }
 
         [UnityTest]
+        public IEnumerator ScreenSpaceCameraCanvas_UsesItsCameraOnceAssigned()
+        {
+            var canvas = _ui.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            POI_World poi = CreatePoint(new Vector3(0f, 0f, 10f));
+            poi.Activate();
+            yield return null;
+            Assert.That(LocalPosition(ScreenMarker(poi)).magnitude, Is.LessThan(1f), "without a camera it renders as Overlay");
+
+            canvas.worldCamera = _camera;
+            canvas.planeDistance = 5f;
+            yield return null;
+            yield return null;
+
+            Assert.That(LocalPosition(ScreenMarker(poi)).magnitude, Is.LessThan(1f), "with its camera");
+        }
+
+        [UnityTest]
+        public IEnumerator WorldSpaceCanvasWithoutEventCamera_UsesTheViewCamera()
+        {
+            var canvas = _ui.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            var canvasTransform = (RectTransform)canvas.transform;
+            canvasTransform.SetPositionAndRotation(new Vector3(0f, 0f, 5f), Quaternion.identity);
+            canvasTransform.sizeDelta = new Vector2(800f, 600f);
+            canvasTransform.localScale = Vector3.one * 0.01f;
+            POI_World poi = CreatePoint(new Vector3(0f, 0f, 10f));
+
+            poi.Activate();
+            yield return null;
+
+            Assert.That(LocalPosition(ScreenMarker(poi)).magnitude, Is.LessThan(1f));
+        }
+
+        [UnityTest]
         public IEnumerator PointBehindTheCamera_HugsTheBottomEdgeInsideThePadding()
         {
             POI_World poi = CreatePoint(new Vector3(0f, 0f, -10f));

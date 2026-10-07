@@ -9,6 +9,7 @@ namespace POI
         // Points waiting for a viewport and marker prefab, or for a respawn after either changed.
         readonly List<IPointOfInterest> _pending = new List<IPointOfInterest>();
         MarkerSpawner _spawner;
+        Canvas _rootCanvas;
         bool _isLayoutDirty = true;
 
         protected abstract RectTransform Viewport { get; }
@@ -18,8 +19,6 @@ namespace POI
         protected MarkerSpawner Markers => _spawner;
 
         protected Rect MarkerBounds { get; private set; }
-
-        protected Camera CanvasCamera { get; private set; }
 
         public int MarkerCount => _spawner != null ? _spawner.Count : 0;
 
@@ -118,9 +117,22 @@ namespace POI
             _pending.Clear();
         }
 
+        // Read every frame, so a canvas camera assigned or replaced later is picked up. RectTransformUtility expects
+        // null for Screen Space - Overlay, and for Screen Space - Camera without a camera, which renders as Overlay.
+        protected Camera GetCanvasCamera(in POIViewContext context)
+        {
+            if (_rootCanvas == null || _rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+                return null;
+
+            if (_rootCanvas.worldCamera != null)
+                return _rootCanvas.worldCamera;
+
+            return _rootCanvas.renderMode == RenderMode.WorldSpace ? context.Camera : null;
+        }
+
         void ReadLayout()
         {
-            CanvasCamera = GetCanvasCamera(_spawner.Viewport);
+            _rootCanvas = FindRootCanvas(_spawner.Viewport);
 
             // Every marker is a copy of one prefab, so one marker's size stands for all of them. A hidden marker has
             // no size, so it is shown first; it is placed before anything is drawn.
@@ -143,15 +155,10 @@ namespace POI
             _spawner = null;
         }
 
-        // Screen Space - Overlay canvases have no camera, which RectTransformUtility expects as null.
-        static Camera GetCanvasCamera(RectTransform viewport)
+        static Canvas FindRootCanvas(RectTransform viewport)
         {
-            Canvas canvas = viewport.GetComponentInParent<Canvas>();
-            if (canvas == null)
-                return null;
-
-            Canvas rootCanvas = canvas.rootCanvas;
-            return rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : rootCanvas.worldCamera;
+            Canvas[] canvases = viewport.GetComponentsInParent<Canvas>(true);
+            return canvases.Length > 0 ? canvases[canvases.Length - 1] : null;
         }
     }
 }

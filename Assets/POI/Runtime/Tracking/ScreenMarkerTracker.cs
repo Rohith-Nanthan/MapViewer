@@ -26,6 +26,7 @@ namespace POI
         protected override void PlaceMarkers(in POIViewContext context, RectTransform viewport)
         {
             Rect allowedPivotArea = POIMath.GetAllowedPivotArea(viewport.rect, MarkerBounds, _settings.Padding);
+            Camera canvasCamera = GetCanvasCamera(context);
 
             foreach (KeyValuePair<IPointOfInterest, POI_Marker> pair in Markers)
             {
@@ -35,7 +36,7 @@ namespace POI
                     continue;
 
                 Vector2 screenPoint = POIMath.ProjectToScreen(context.Camera, poi.Position);
-                if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(viewport, screenPoint, CanvasCamera, out Vector2 localPoint))
+                if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(viewport, screenPoint, canvasCamera, out Vector2 localPoint))
                 {
                     marker.SetVisible(false);
                     continue;
