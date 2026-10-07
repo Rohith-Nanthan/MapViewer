@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
 namespace POI
@@ -8,7 +9,7 @@ namespace POI
     public sealed class MarkerSpawner : IDisposable
     {
         readonly Dictionary<IPointOfInterest, POI_Marker> _spawned = new Dictionary<IPointOfInterest, POI_Marker>();
-        readonly Stack<POI_Marker> _despawned = new Stack<POI_Marker>();
+        readonly ObjectPool<POI_Marker> _pool;
 
         public MarkerSpawner(POI_Marker prefab, RectTransform viewport)
         {
@@ -19,6 +20,7 @@ namespace POI
 
             Prefab = prefab;
             Viewport = viewport;
+            _pool = new ObjectPool<POI_Marker>(SpawnHiddenMarker, actionOnRelease: HideMarker, actionOnDestroy: DestroyMarker);
         }
 
         public POI_Marker Prefab { get; }
@@ -40,10 +42,7 @@ namespace POI
             if (_spawned.TryGetValue(poi, out POI_Marker marker) && marker != null)
                 return marker;
 
-            marker = TakeDespawnedMarker();
-            if (marker == null)
-                marker = SpawnHiddenMarker();
-
+            marker = GetLiveMarkerFromPool();
             marker.name = poi is Object source && source != null ? $"{Prefab.name} ({source.name})" : Prefab.name;
             _spawned[poi] = marker;
             return marker;
@@ -54,14 +53,14 @@ namespace POI
             if (poi == null || !_spawned.Remove(poi, out POI_Marker marker))
                 return false;
 
-            KeepForReuse(marker);
+            ReleaseToPool(marker);
             return true;
         }
 
         public void DespawnAll()
         {
             foreach (POI_Marker marker in _spawned.Values)
-                KeepForReuse(marker);
+                ReleaseToPool(marker);
             _spawned.Clear();
         }
 
@@ -79,9 +78,7 @@ namespace POI
             foreach (POI_Marker marker in _spawned.Values)
                 DestroyMarker(marker);
             _spawned.Clear();
-
-            while (_despawned.Count > 0)
-                DestroyMarker(_despawned.Pop());
+            _pool.Clear();
         }
 
         POI_Marker SpawnHiddenMarker()
@@ -91,26 +88,22 @@ namespace POI
             return marker;
         }
 
-        POI_Marker TakeDespawnedMarker()
+        // The pool still hands out a pooled marker that something else destroyed, so those are skipped.
+        POI_Marker GetLiveMarkerFromPool()
         {
-            while (_despawned.Count > 0)
-            {
-                POI_Marker marker = _despawned.Pop();
-                if (marker != null)
-                    return marker;
-            }
-
-            return null;
+            POI_Marker marker = _pool.Get();
+            while (marker == null)
+                marker = _pool.Get();
+            return marker;
         }
 
-        void KeepForReuse(POI_Marker marker)
+        void ReleaseToPool(POI_Marker marker)
         {
-            if (marker == null)
-                return;
-
-            marker.SetVisible(false);
-            _despawned.Push(marker);
+            if (marker != null)
+                _pool.Release(marker);
         }
+
+        static void HideMarker(POI_Marker marker) => marker.SetVisible(false);
 
         static void DestroyMarker(POI_Marker marker)
         {

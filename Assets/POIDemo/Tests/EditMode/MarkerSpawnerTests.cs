@@ -79,6 +79,20 @@ namespace POI.Tests
         }
 
         [Test]
+        public void GetOrSpawn_DespawnedMarkerDestroyedSince_SpawnsNewMarker()
+        {
+            var poi = new FakePointOfInterest();
+            POI_Marker destroyed = _spawner.GetOrSpawn(poi);
+            _spawner.Despawn(poi);
+            Object.DestroyImmediate(destroyed.gameObject);
+
+            POI_Marker marker = _spawner.GetOrSpawn(new FakePointOfInterest());
+
+            Assert.That(marker != null, Is.True);
+            Assert.That(marker.transform.parent, Is.SameAs(_viewport));
+        }
+
+        [Test]
         public void DespawnAll_HidesEveryMarker()
         {
             POI_Marker first = _spawner.GetOrSpawn(new FakePointOfInterest());
