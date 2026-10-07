@@ -3,10 +3,6 @@ using UnityEngine;
 
 namespace POI
 {
-    /// <summary>
-    /// Inspector and Scene view tools for <see cref="POI_World"/>: the icon, the fixed position, which can be
-    /// dragged in the Scene view, and in Play Mode buttons to activate and deactivate the point of interest.
-    /// </summary>
     [CustomEditor(typeof(POI_World)), CanEditMultipleObjects]
     sealed class POI_WorldEditor : Editor
     {

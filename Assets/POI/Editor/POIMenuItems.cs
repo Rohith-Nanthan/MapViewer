@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace POI
 {
-    /// <summary>Adds GameObject > UI > POI UI, which drops the POI UI prefab, a Screen Space - Overlay canvas, into the scene.</summary>
+    // Adds GameObject > UI > POI UI, which drops the demo POI UI prefab, a Screen Space - Overlay canvas, into the scene.
     static class POIMenuItems
     {
         const string k_PrefabGuid = "a958d1ea905de0345949e3994e4ab09f";

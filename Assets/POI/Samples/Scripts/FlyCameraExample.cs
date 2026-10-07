@@ -3,10 +3,8 @@ using UnityEngine.InputSystem;
 
 namespace POI.Samples
 {
-    /// <summary>
-    /// Free-flying camera for trying the POI markers out, including against a fast camera: sprint to move several
-    /// times faster, or toggle a spin that turns the camera a full circle every second.
-    /// </summary>
+    // Sprinting moves several times faster, and the spin turns a full circle every second, to try the markers
+    // against a fast camera.
     public sealed class FlyCameraExample : MonoBehaviour
     {
         const float k_MaxPitch = 89f;

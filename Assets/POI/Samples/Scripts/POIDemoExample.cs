@@ -7,11 +7,6 @@ using UnityEngine.InputSystem.Controls;
 
 namespace POI.Samples
 {
-    /// <summary>
-    /// Example of driving points of interest from game code: <see cref="POI_World.Activate"/> and
-    /// <see cref="POI_World.DeActivate"/> are all it takes. The number keys toggle each point, 0 toggles them all,
-    /// and an optional text lists which are active.
-    /// </summary>
     public sealed class POIDemoExample : MonoBehaviour
     {
         [Tooltip("Points the number keys toggle, in order: 1 toggles the first.")]

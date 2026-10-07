@@ -3,10 +3,6 @@ using UnityEngine;
 
 namespace POI
 {
-    /// <summary>
-    /// Where the camera and the player are this frame. <see cref="POI_UI"/> reads it once, after the camera has
-    /// moved, and hands the same values to every tracker.
-    /// </summary>
     public readonly struct POIViewContext
     {
         public POIViewContext(Camera camera, Vector3 playerPosition)
@@ -22,7 +18,6 @@ namespace POI
             PlayerPosition = playerPosition;
         }
 
-        /// <summary>Camera the markers are relative to.</summary>
         public Camera Camera { get; }
 
         public Vector3 CameraPosition { get; }
@@ -31,7 +26,6 @@ namespace POI
 
         public Vector3 CameraUp { get; }
 
-        /// <summary>Where distances are measured from.</summary>
         public Vector3 PlayerPosition { get; }
     }
 }

@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace POI
 {
-    /// <summary>Size and safe area of the screen at one moment, as reported by <see cref="ScreenResolutionManager"/>.</summary>
     public readonly struct ScreenResolution : IEquatable<ScreenResolution>
     {
         public ScreenResolution(Vector2Int size, Rect safeArea)
@@ -12,16 +11,12 @@ namespace POI
             SafeArea = safeArea;
         }
 
-        /// <summary>The screen as it is now.</summary>
         public static ScreenResolution Current => new ScreenResolution(new Vector2Int(Screen.width, Screen.height), Screen.safeArea);
 
-        /// <summary>Width and height in pixels.</summary>
         public Vector2Int Size { get; }
 
-        /// <summary>Part of the screen, in pixels, that is not covered by notches, rounded corners or system bars.</summary>
         public Rect SafeArea { get; }
 
-        /// <summary>Width divided by height.</summary>
         public float Aspect => Size.y > 0 ? (float)Size.x / Size.y : 1f;
 
         public bool IsLandscape => Size.x >= Size.y;

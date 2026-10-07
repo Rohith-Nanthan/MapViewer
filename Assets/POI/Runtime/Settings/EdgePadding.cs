@@ -3,10 +3,7 @@ using UnityEngine;
 
 namespace POI
 {
-    /// <summary>
-    /// Space kept between a UI element and each edge of the rectangle it stays inside, in canvas units. Unlike
-    /// <see cref="RectOffset"/>, it is a plain value, so it can have defaults in field initializers.
-    /// </summary>
+    // A plain value rather than RectOffset, whose constructor Unity forbids in field initializers of components.
     [Serializable]
     public struct EdgePadding : IEquatable<EdgePadding>
     {
@@ -15,13 +12,11 @@ namespace POI
         [SerializeField, Min(0f)] float m_Top;
         [SerializeField, Min(0f)] float m_Bottom;
 
-        /// <summary>The same padding on every edge.</summary>
         public EdgePadding(float all)
             : this(all, all, all, all)
         {
         }
 
-        /// <summary>Padding per edge, in the same order as <see cref="RectOffset"/>. Negative values count as 0.</summary>
         public EdgePadding(float left, float right, float top, float bottom)
         {
             m_Left = Mathf.Max(0f, left);
