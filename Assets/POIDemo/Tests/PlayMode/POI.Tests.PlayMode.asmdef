@@ -1,16 +1,15 @@
 {
-    "name": "POI.Tests.EditMode",
+    "name": "POI.Tests.PlayMode",
     "rootNamespace": "POI.Tests",
     "references": [
         "POI.Runtime",
+        "POI.Demo",
         "Unity.TextMeshPro",
         "UnityEngine.UI",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,

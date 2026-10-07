@@ -1,4 +1,4 @@
-namespace POI
+namespace POI.Demo
 {
     public sealed class ScreenResolutionTracker
     {

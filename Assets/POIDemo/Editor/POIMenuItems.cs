@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace POI
+namespace POI.Demo
 {
     // Adds GameObject > UI > POI UI, which drops the demo POI UI prefab, a Screen Space - Overlay canvas, into the scene.
     static class POIMenuItems

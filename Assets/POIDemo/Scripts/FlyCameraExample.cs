@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace POI.Samples
+namespace POI.Demo
 {
     // Sprinting moves several times faster, and the spin turns a full circle every second, to try the markers
     // against a fast camera.

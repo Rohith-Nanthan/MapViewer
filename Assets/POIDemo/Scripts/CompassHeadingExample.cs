@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace POI.Samples
+namespace POI.Demo
 {
     // Stand-in for a game's own compass strip. North is +Z. It runs as late as POI_UI, so the directions and the
     // markers use the same camera pose.

@@ -1,0 +1,19 @@
+{
+    "name": "POI.Demo.Editor",
+    "rootNamespace": "POI.Demo",
+    "references": [
+        "POI.Runtime",
+        "POI.Demo"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

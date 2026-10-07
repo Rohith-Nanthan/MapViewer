@@ -2,9 +2,9 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace POI
+namespace POI.Demo
 {
-    [AddComponentMenu("POI/Screen Resolution Manager")]
+    [AddComponentMenu("POI Demo/Screen Resolution Manager")]
     [DefaultExecutionOrder(k_ExecutionOrder)]
     [DisallowMultipleComponent]
     public sealed class ScreenResolutionManager : MonoBehaviour

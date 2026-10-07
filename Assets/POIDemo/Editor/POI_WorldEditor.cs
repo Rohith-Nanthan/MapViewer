@@ -1,10 +1,10 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace POI
+namespace POI.Demo
 {
     [CustomEditor(typeof(POI_World)), CanEditMultipleObjects]
-    sealed class POI_WorldEditor : Editor
+    sealed class POI_WorldEditor : UnityEditor.Editor
     {
         const float k_GizmoRadius = 0.5f;
         static readonly Color k_ActiveColor = new Color(1f, 0.8f, 0.2f);

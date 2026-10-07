@@ -1,8 +1,8 @@
 using UnityEngine;
 
-namespace POI
+namespace POI.Demo
 {
-    [AddComponentMenu("POI/POI World")]
+    [AddComponentMenu("POI Demo/POI World")]
     public sealed class POI_World : MonoBehaviour, IPointOfInterest
     {
         [Tooltip("Icon shown on screen and on the compass while active.")]

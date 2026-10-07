@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using POI.Demo;
 using UnityEngine;
 
 namespace POI.Tests

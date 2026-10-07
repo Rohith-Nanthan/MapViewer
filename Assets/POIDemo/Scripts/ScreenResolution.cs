@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace POI
+namespace POI.Demo
 {
     public readonly struct ScreenResolution : IEquatable<ScreenResolution>
     {

@@ -1,6 +1,6 @@
 {
-    "name": "POI.Samples",
-    "rootNamespace": "POI.Samples",
+    "name": "POI.Demo",
+    "rootNamespace": "POI.Demo",
     "references": [
         "POI.Runtime",
         "Unity.InputSystem",
@@ -13,15 +13,7 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": false,
-    "defineConstraints": [
-        "POI_SAMPLES_INPUT_SYSTEM"
-    ],
-    "versionDefines": [
-        {
-            "name": "com.unity.inputsystem",
-            "expression": "1.0.0",
-            "define": "POI_SAMPLES_INPUT_SYSTEM"
-        }
-    ],
+    "defineConstraints": [],
+    "versionDefines": [],
     "noEngineReferences": false
 }

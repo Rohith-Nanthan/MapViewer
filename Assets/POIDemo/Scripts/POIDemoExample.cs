@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 
-namespace POI.Samples
+namespace POI.Demo
 {
     public sealed class POIDemoExample : MonoBehaviour
     {
