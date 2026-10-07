@@ -14,7 +14,6 @@ namespace POI
     {
         SerializedProperty _camera;
         SerializedProperty _player;
-        SerializedProperty _screenResolutionManager;
         SerializedProperty _screen;
         SerializedProperty _compass;
 
@@ -22,7 +21,6 @@ namespace POI
         {
             _camera = serializedObject.FindProperty("m_Camera");
             _player = serializedObject.FindProperty("m_Player");
-            _screenResolutionManager = serializedObject.FindProperty("m_ScreenResolutionManager");
             _screen = serializedObject.FindProperty("m_Screen");
             _compass = serializedObject.FindProperty("m_Compass");
         }
@@ -46,10 +44,6 @@ namespace POI
             EditorGUILayout.PropertyField(_player);
             if (_player.objectReferenceValue == null)
                 EditorGUILayout.HelpBox("Distances are measured from the camera.", MessageType.Info);
-
-            EditorGUILayout.PropertyField(_screenResolutionManager);
-            if (_screenResolutionManager.objectReferenceValue == null)
-                EditorGUILayout.HelpBox("In Play Mode, uses the Screen Resolution Manager in the scene, or adds one here.", MessageType.Info);
 
             DrawSection("Screen", _screen);
             DrawSection("Compass", _compass);

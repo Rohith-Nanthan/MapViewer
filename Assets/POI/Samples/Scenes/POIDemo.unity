@@ -1846,6 +1846,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: POI.Runtime::POI.ScreenResolutionManager
   m_LogChanges: 1
+  m_OnResolutionChanged:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 7531701810618595914}
+        m_TargetAssemblyTypeName: POI.POI_UI, POI.Runtime
+        m_MethodName: RefreshLayout
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!4 &565696722
 Transform:
   m_ObjectHideFlags: 0
@@ -7587,17 +7602,13 @@ PrefabInstance:
       propertyPath: m_Player
       value: 
       objectReference: {fileID: 2080074539}
-    - target: {fileID: 1726055709079294482, guid: a958d1ea905de0345949e3994e4ab09f, type: 3}
-      propertyPath: m_ScreenResolutionManager
-      value: 
-      objectReference: {fileID: 565696721}
     - target: {fileID: 4742927984198593973, guid: a958d1ea905de0345949e3994e4ab09f, type: 3}
       propertyPath: m_SizeDelta.y
       value: -302
       objectReference: {fileID: 0}
     - target: {fileID: 4742927984198593973, guid: a958d1ea905de0345949e3994e4ab09f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4742927984198593973, guid: a958d1ea905de0345949e3994e4ab09f, type: 3}
       propertyPath: m_AnchoredPosition.y

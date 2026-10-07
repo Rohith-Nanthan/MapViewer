@@ -252,7 +252,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: POI.Runtime::POI.POI_UI
   m_Camera: {fileID: 0}
   m_Player: {fileID: 0}
-  m_ScreenResolutionManager: {fileID: 0}
   m_Screen:
     m_Viewport: {fileID: 4742927984198593973}
     m_Template: {fileID: 5937686473183411023}

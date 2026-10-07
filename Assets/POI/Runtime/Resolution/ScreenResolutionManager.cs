@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace POI
 {
@@ -21,6 +22,9 @@ namespace POI
         [Tooltip("Write each change to the console, e.g. while testing layouts.")]
         [SerializeField] bool m_LogChanges;
 
+        [Tooltip("Invoked after the screen's size or safe area changes, e.g. wired to POI UI's RefreshLayout.")]
+        [SerializeField] UnityEvent m_OnResolutionChanged = new UnityEvent();
+
         ScreenResolutionTracker _tracker;
 
         /// <summary>Raised with the new resolution after the screen's size or safe area changes.</summary>
@@ -35,6 +39,8 @@ namespace POI
             set => m_LogChanges = value;
         }
 
+        public UnityEvent OnResolutionChanged => m_OnResolutionChanged;
+
         ScreenResolutionTracker Tracker => _tracker ??= new ScreenResolutionTracker(ScreenResolution.Current);
 
         /// <summary>Checks the screen now rather than at the start of the next frame.</summary>
@@ -48,6 +54,7 @@ namespace POI
                 Debug.Log($"Screen resolution changed to {Current}.", this);
 
             ResolutionChanged?.Invoke(Current);
+            m_OnResolutionChanged.Invoke();
             return true;
         }
 

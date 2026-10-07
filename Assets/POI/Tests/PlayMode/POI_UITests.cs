@@ -305,13 +305,5 @@ namespace POI.Tests
             Assert.That(ScreenMarker(poi).IsVisible, Is.False);
             Assert.That(CompassMarker(poi).IsVisible, Is.False);
         }
-
-        [UnityTest]
-        public IEnumerator WithoutAResolutionManager_OneIsAdded()
-        {
-            yield return null;
-
-            Assert.That(_ui.ScreenResolutionManager, Is.Not.Null);
-        }
     }
 }

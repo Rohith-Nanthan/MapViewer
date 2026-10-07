@@ -13,8 +13,8 @@ namespace POI
     /// Put it on a Screen Space - Overlay canvas, then assign a viewport and a marker template in the Screen and
     /// Compass sections; leave both empty to skip a section. Points of interest come from
     /// <see cref="POIRegistry"/>, so calling <see cref="POI_World.Activate"/> anywhere is enough. Markers are
-    /// placed in LateUpdate, after cameras have moved, so they stay on target however fast the camera moves, and
-    /// their layout is refreshed whenever <see cref="ScreenResolutionManager"/> reports a resolution change.
+    /// placed in LateUpdate, after cameras have moved, so they stay on target however fast the camera moves.
+    /// Call <see cref="RefreshLayout"/> from your screen resolution manager when the resolution changes.
     /// </remarks>
     [AddComponentMenu("POI/POI UI")]
     [DefaultExecutionOrder(k_ExecutionOrder)]
@@ -30,10 +30,6 @@ namespace POI
         [Tooltip("Distances on the markers are measured from here. Uses the camera when empty.")]
         [SerializeField] Transform m_Player;
 
-        [Tooltip("Reports screen resolution changes, so the markers' layout is refreshed. " +
-                 "Uses the one in the scene, or adds one, when empty.")]
-        [SerializeField] ScreenResolutionManager m_ScreenResolutionManager;
-
         [SerializeField] ScreenMarkerSettings m_Screen = new ScreenMarkerSettings();
 
         [SerializeField] CompassMarkerSettings m_Compass = new CompassMarkerSettings();
@@ -43,7 +39,6 @@ namespace POI
         CompassMarkerTracker _compassTracker;
         POIRegistry _registry;
         POIRegistry _subscribedRegistry;
-        ScreenResolutionManager _subscribedResolution;
         bool _isLayoutDirty = true;
 
         /// <summary>Camera the markers are relative to: the assigned one, or else the main camera.</summary>
@@ -58,20 +53,6 @@ namespace POI
         {
             get => m_Player;
             set => m_Player = value;
-        }
-
-        /// <summary>Source of resolution changes. Changing it while enabled moves the subscription over.</summary>
-        public ScreenResolutionManager ScreenResolutionManager
-        {
-            get => m_ScreenResolutionManager;
-            set
-            {
-                UnsubscribeFromResolution();
-                m_ScreenResolutionManager = value;
-                if (isActiveAndEnabled)
-                    SubscribeToResolution();
-                RefreshLayout();
-            }
         }
 
         /// <summary>Where the points of interest come from. Defaults to <see cref="POIRegistry.Default"/>.</summary>
@@ -155,8 +136,8 @@ namespace POI
         }
 
         /// <summary>
-        /// Re-reads the layout on the next frame, e.g. after resizing a marker template at runtime. Resolution
-        /// changes do this automatically.
+        /// Re-reads the layout in this frame's LateUpdate. Call it when the screen resolution changes, or after
+        /// resizing a marker at runtime.
         /// </summary>
         public void RefreshLayout() => _isLayoutDirty = true;
 
@@ -164,19 +145,11 @@ namespace POI
 
         void OnEnable()
         {
-            if (m_ScreenResolutionManager == null)
-                m_ScreenResolutionManager = FindOrAddScreenResolutionManager();
-
-            SubscribeToResolution();
             SubscribeToRegistry();
             RefreshLayout();
         }
 
-        void OnDisable()
-        {
-            UnsubscribeFromRegistry();
-            UnsubscribeFromResolution();
-        }
+        void OnDisable() => UnsubscribeFromRegistry();
 
         void OnDestroy()
         {
@@ -226,12 +199,6 @@ namespace POI
             _trackers.Insert(1, _compassTracker);
         }
 
-        ScreenResolutionManager FindOrAddScreenResolutionManager()
-        {
-            var manager = FindAnyObjectByType<ScreenResolutionManager>();
-            return manager != null ? manager : gameObject.AddComponent<ScreenResolutionManager>();
-        }
-
         void SubscribeToRegistry()
         {
             if (_subscribedRegistry != null)
@@ -256,24 +223,6 @@ namespace POI
                 tracker.Clear();
         }
 
-        void SubscribeToResolution()
-        {
-            if (_subscribedResolution != null || m_ScreenResolutionManager == null)
-                return;
-
-            _subscribedResolution = m_ScreenResolutionManager;
-            _subscribedResolution.ResolutionChanged += OnResolutionChanged;
-        }
-
-        void UnsubscribeFromResolution()
-        {
-            if (_subscribedResolution == null)
-                return;
-
-            _subscribedResolution.ResolutionChanged -= OnResolutionChanged;
-            _subscribedResolution = null;
-        }
-
         void OnAdded(IPointOfInterest poi)
         {
             InitializeTrackers();
@@ -286,7 +235,5 @@ namespace POI
             foreach (IPOITracker tracker in _trackers)
                 tracker.Remove(poi);
         }
-
-        void OnResolutionChanged(ScreenResolution resolution) => RefreshLayout();
     }
 }
