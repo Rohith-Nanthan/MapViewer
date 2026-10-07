@@ -102,7 +102,7 @@ namespace POI
             EditorGUILayout.LabelField("Runtime", EditorStyles.boldLabel);
             using (new EditorGUI.DisabledScope(true))
             {
-                EditorGUILayout.IntField("Active Points", ui.Registry.Count);
+                EditorGUILayout.IntField("Active Points", POIRegistry.Default.Count);
                 EditorGUILayout.IntField("Screen Markers", ui.ScreenTracker.Count);
                 EditorGUILayout.IntField("Compass Markers", ui.CompassTracker.Count);
                 EditorGUILayout.ObjectField("Camera In Use", ui.Camera, typeof(Camera), true);

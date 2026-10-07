@@ -8,7 +8,7 @@ namespace POI
     /// Base for trackers that show a copy of a marker template per point of interest inside a viewport. It owns
     /// the markers and their layout; subclasses only decide where each marker goes.
     /// </summary>
-    public abstract class MarkerTracker : IPOITracker
+    public abstract class MarkerTracker : IDisposable
     {
         readonly MarkerSet _markers = new MarkerSet();
 
