@@ -3,43 +3,37 @@ using UnityEngine;
 
 namespace POI
 {
-    /// <summary>
-    /// Where compass markers are shown, set in the Compass section of <see cref="POI_UI"/>. Markers slide
-    /// horizontally with the camera's heading, centered when the camera faces their point of interest, and
-    /// stop at the edges for points outside the field of view.
-    /// </summary>
     [Serializable]
     public sealed class CompassMarkerSettings
     {
-        /// <summary>Widest field of view: the whole way around.</summary>
         const float k_FullCircleDegrees = 360f;
 
-        [Tooltip("Rectangle the markers slide along, e.g. over the compass bar. Markers are created as its children " +
-                 "and keep the height of the template.")]
+        [Tooltip("Empty rectangle the markers slide along, e.g. a lane over your compass strip. Markers are spawned " +
+                 "as its children and centered vertically in it.")]
         [SerializeField] RectTransform m_Viewport;
 
-        [Tooltip("Marker copied for each point of interest. Give it a distance label below the icon to show how far " +
-                 "away the point is. Its size, children included, always stays inside the viewport.")]
-        [SerializeField] POI_Marker m_Template;
+        [Tooltip("Prefab spawned for each point of interest, with the distance label under its icon. Its size, " +
+                 "children included, always stays inside the viewport.")]
+        [SerializeField] POI_Marker m_MarkerPrefab;
 
         [Tooltip("Degrees of heading the viewport's width spans, centered on where the camera faces. Match your " +
-                 "compass graphic, so markers line up with its directions.")]
+                 "compass strip, so markers line up with its directions.")]
         [SerializeField, Range(1f, k_FullCircleDegrees)] float m_DegreesAcrossViewport = 180f;
 
         [Tooltip("Space kept between the markers and the left and right edges of the viewport, in canvas units.")]
         [SerializeField, Min(0f)] float m_Padding = 8f;
 
-        [Tooltip("Text for markers that have a distance label. {0} is the distance from the player in whole meters.")]
+        [Tooltip("Text of the distance label. {0} is the distance from the player in whole meters.")]
         [SerializeField] string m_DistanceFormat = POI_Marker.DefaultDistanceFormat;
 
         public CompassMarkerSettings()
         {
         }
 
-        public CompassMarkerSettings(RectTransform viewport, POI_Marker template)
+        public CompassMarkerSettings(RectTransform viewport, POI_Marker markerPrefab)
         {
             m_Viewport = viewport;
-            m_Template = template;
+            m_MarkerPrefab = markerPrefab;
         }
 
         public RectTransform Viewport
@@ -48,10 +42,10 @@ namespace POI
             set => m_Viewport = value;
         }
 
-        public POI_Marker Template
+        public POI_Marker MarkerPrefab
         {
-            get => m_Template;
-            set => m_Template = value;
+            get => m_MarkerPrefab;
+            set => m_MarkerPrefab = value;
         }
 
         public float DegreesAcrossViewport

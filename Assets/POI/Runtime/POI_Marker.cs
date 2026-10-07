@@ -44,9 +44,6 @@ namespace POI
 
         public bool IsVisible => gameObject.activeSelf;
 
-        // The template a MarkerSet copied this marker from, so copies are only reused for the same template.
-        internal POI_Marker Template { get; set; }
-
         public static bool IsValidDistanceFormat(string format)
         {
             if (format == null)

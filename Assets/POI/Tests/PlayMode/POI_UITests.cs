@@ -8,10 +8,6 @@ using UnityEngine.UI;
 
 namespace POI.Tests
 {
-    /// <summary>
-    /// End-to-end checks of POI_World and POI_UI on a Screen Space - Overlay canvas: activation, both kinds of
-    /// marker, keeping markers inside their viewports, and keeping up with a fast camera.
-    /// </summary>
     public class POI_UITests
     {
         const int k_Padding = 16;
@@ -44,20 +40,18 @@ namespace POI.Tests
             _screenViewport = CreateRect("Screen Viewport", canvasObject.transform, Vector2.zero);
             _screenViewport.anchorMin = Vector2.zero;
             _screenViewport.anchorMax = Vector2.one;
-            POI_Marker screenTemplate = CreateMarker("Screen Marker", _screenViewport, k_ScreenIconSize, false);
 
             RectTransform compassViewport = CreateRect("Compass Viewport", canvasObject.transform, new Vector2(k_CompassWidth, 100f));
             compassViewport.anchorMin = compassViewport.anchorMax = new Vector2(0.5f, 1f);
             compassViewport.anchoredPosition = new Vector2(0f, -60f);
-            POI_Marker compassTemplate = CreateMarker("Compass Marker", compassViewport, 48f, true);
 
             _ui = canvasObject.AddComponent<POI_UI>();
             _ui.Camera = _camera;
-            _ui.ScreenSettings = new ScreenMarkerSettings(_screenViewport, screenTemplate)
+            _ui.ScreenSettings = new ScreenMarkerSettings(_screenViewport, CreateMarkerPrefab("Screen Marker", k_ScreenIconSize, false))
             {
                 Padding = new EdgePadding(k_Padding),
             };
-            _ui.CompassSettings = new CompassMarkerSettings(compassViewport, compassTemplate)
+            _ui.CompassSettings = new CompassMarkerSettings(compassViewport, CreateMarkerPrefab("Compass Marker", 48f, true))
             {
                 DegreesAcrossViewport = 180f,
                 Padding = k_CompassPadding,
@@ -92,9 +86,11 @@ namespace POI.Tests
             return rectTransform;
         }
 
-        static POI_Marker CreateMarker(string name, Transform viewport, float iconSize, bool withLabel)
+        // Stands in for a prefab asset: outside any canvas, so it never draws.
+        POI_Marker CreateMarkerPrefab(string name, float iconSize, bool withLabel)
         {
-            RectTransform icon = CreateRect(name, viewport, new Vector2(iconSize, iconSize));
+            RectTransform icon = CreateRect(name, null, new Vector2(iconSize, iconSize));
+            Track(icon.gameObject);
 
             // Reset only wires the references in the Editor, so they are set explicitly in Play Mode.
             var marker = icon.gameObject.AddComponent<POI_Marker>();

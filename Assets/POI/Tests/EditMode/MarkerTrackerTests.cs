@@ -5,21 +5,24 @@ using UnityEngine.UI;
 
 namespace POI.Tests
 {
-    /// <summary>
-    /// Drives the screen and compass trackers directly with an 800x600 camera. The viewports have no canvas, so
-    /// they behave like Screen Space - Overlay: one unit is one screen pixel.
-    /// </summary>
+    // Drives the trackers with an 800x600 camera. The viewports have no canvas, so they behave like Screen Space -
+    // Overlay: one unit is one screen pixel.
     public class MarkerTrackerTests
     {
         const int k_Padding = 16;
         const float k_CompassPadding = 8f;
-        const float k_CompassMarkerHeight = 10f;
+
+        // A 48 unit compass icon above a 120x24 label spans y -48 to 24 around its pivot, so centering it in the
+        // 100 unit compass viewport puts the pivot at y 12.
+        const float k_CenteredCompassMarkerY = 12f;
 
         Camera _camera;
         RenderTexture _target;
         GameObject _root;
         RectTransform _screenViewport;
         RectTransform _compassViewport;
+        POI_Marker _screenMarkerPrefab;
+        POI_Marker _compassMarkerPrefab;
         Texture2D _texture;
         Sprite _sprite;
         ScreenMarkerTracker _screen;
@@ -39,24 +42,14 @@ namespace POI.Tests
             _compassViewport = CreateRect("Compass Viewport", _root.transform, new Vector2(900f, 100f));
             _compassViewport.position = new Vector3(400f, 550f, 0f);
 
-            RectTransform screenIcon = CreateIcon("Screen Marker", _screenViewport, new Vector2(64f, 64f));
+            _screenMarkerPrefab = CreateMarkerPrefab("Screen Marker", new Vector2(64f, 64f), withDistanceLabel: false);
+            _compassMarkerPrefab = CreateMarkerPrefab("Compass Marker", new Vector2(48f, 48f), withDistanceLabel: true);
 
-            // A 48 unit icon with a wider 120 unit distance label underneath.
-            RectTransform compassIcon = CreateIcon("Compass Marker", _compassViewport, new Vector2(48f, 48f));
-            compassIcon.localPosition = new Vector3(0f, k_CompassMarkerHeight, 0f);
-            RectTransform label = CreateRect("Distance", compassIcon, new Vector2(120f, 24f));
-            label.anchoredPosition = new Vector2(0f, -36f);
-            label.gameObject.AddComponent<TextMeshProUGUI>();
-
-            // Added once the children exist, so Reset finds the icon and the label.
-            var screenTemplate = screenIcon.gameObject.AddComponent<POI_Marker>();
-            var compassTemplate = compassIcon.gameObject.AddComponent<POI_Marker>();
-
-            _screen = new ScreenMarkerTracker(new ScreenMarkerSettings(_screenViewport, screenTemplate)
+            _screen = new ScreenMarkerTracker(new ScreenMarkerSettings(_screenViewport, _screenMarkerPrefab)
             {
                 Padding = new EdgePadding(k_Padding),
             });
-            _compass = new CompassMarkerTracker(new CompassMarkerSettings(_compassViewport, compassTemplate)
+            _compass = new CompassMarkerTracker(new CompassMarkerSettings(_compassViewport, _compassMarkerPrefab)
             {
                 DegreesAcrossViewport = 180f,
                 Padding = k_CompassPadding,
@@ -86,11 +79,20 @@ namespace POI.Tests
             return rectTransform;
         }
 
-        static RectTransform CreateIcon(string name, Transform viewport, Vector2 size)
+        // Stands in for a prefab asset: kept outside the viewports, never shown.
+        POI_Marker CreateMarkerPrefab(string name, Vector2 iconSize, bool withDistanceLabel)
         {
-            RectTransform icon = CreateRect(name, viewport, size);
+            RectTransform icon = CreateRect(name, _root.transform, iconSize);
             icon.gameObject.AddComponent<Image>();
-            return icon;
+            if (withDistanceLabel)
+            {
+                RectTransform label = CreateRect("Distance", icon, new Vector2(120f, 24f));
+                label.anchoredPosition = new Vector2(0f, -iconSize.y * 0.5f - 12f);
+                label.gameObject.AddComponent<TextMeshProUGUI>();
+            }
+
+            // Added once the children exist, so Reset finds the icon and the label.
+            return icon.gameObject.AddComponent<POI_Marker>();
         }
 
         FakePointOfInterest CreatePoint(Vector3 position) => new FakePointOfInterest { Icon = _sprite, Position = position };
@@ -189,7 +191,7 @@ namespace POI.Tests
         [Test]
         public void Add_BeforeViewportIsAssigned_ShowsOnceItIs()
         {
-            var settings = new ScreenMarkerSettings(null, _screen.Settings.Template);
+            var settings = new ScreenMarkerSettings(null, _screenMarkerPrefab);
             var tracker = new ScreenMarkerTracker(settings);
             try
             {
@@ -211,6 +213,56 @@ namespace POI.Tests
         }
 
         [Test]
+        public void ChangingMarkerPrefab_RespawnsExistingMarkers()
+        {
+            FakePointOfInterest poi = CreatePoint(new Vector3(0f, 0f, 10f));
+            POI_Marker oldMarker = Place(_screen, poi);
+            POI_Marker otherPrefab = CreateMarkerPrefab("Other Marker", new Vector2(32f, 32f), withDistanceLabel: false);
+
+            _screen.Settings.MarkerPrefab = otherPrefab;
+            _screen.Update(new POIViewContext(_camera, Vector3.zero));
+
+            Assert.That(oldMarker == null, Is.True);
+            Assert.That(_screen.TryGetMarker(poi, out POI_Marker newMarker), Is.True);
+            Assert.That(newMarker.name, Is.EqualTo(otherPrefab.name));
+            Assert.That(newMarker.IsVisible, Is.True);
+        }
+
+        [Test]
+        public void ChangingViewport_RespawnsUnderTheNewViewport()
+        {
+            FakePointOfInterest poi = CreatePoint(new Vector3(0f, 0f, 10f));
+            POI_Marker oldMarker = Place(_screen, poi);
+            RectTransform otherViewport = CreateRect("Other Viewport", _root.transform, new Vector2(400f, 300f));
+            otherViewport.position = new Vector3(400f, 300f, 0f);
+
+            _screen.Settings.Viewport = otherViewport;
+            _screen.Update(new POIViewContext(_camera, Vector3.zero));
+
+            Assert.That(oldMarker == null, Is.True);
+            Assert.That(_screen.TryGetMarker(poi, out POI_Marker newMarker), Is.True);
+            Assert.That(newMarker.transform.parent, Is.SameAs(otherViewport));
+            AssertApproximately(Vector2.zero, LocalPosition(newMarker));
+        }
+
+        [Test]
+        public void ClearingMarkerPrefab_RemovesMarkersUntilItIsAssignedAgain()
+        {
+            FakePointOfInterest poi = CreatePoint(new Vector3(0f, 0f, 10f));
+            POI_Marker oldMarker = Place(_screen, poi);
+
+            _screen.Settings.MarkerPrefab = null;
+            _screen.Update(new POIViewContext(_camera, Vector3.zero));
+            Assert.That(oldMarker == null, Is.True);
+            Assert.That(_screen.MarkerCount, Is.EqualTo(0));
+
+            _screen.Settings.MarkerPrefab = _screenMarkerPrefab;
+            _screen.Update(new POIViewContext(_camera, Vector3.zero));
+            Assert.That(_screen.TryGetMarker(poi, out POI_Marker newMarker), Is.True);
+            Assert.That(newMarker.IsVisible, Is.True);
+        }
+
+        [Test]
         public void Hide_HidesMarkersUntilTheNextUpdate()
         {
             POI_Marker marker = Place(_screen, CreatePoint(new Vector3(0f, 0f, 10f)));
@@ -223,12 +275,26 @@ namespace POI.Tests
         }
 
         [Test]
-        public void Compass_PointAhead_IsCenteredAtTheTemplateHeight()
+        public void Compass_PointAhead_CentersMarkerAndLabelInTheViewport()
         {
             POI_Marker marker = Place(_compass, CreatePoint(new Vector3(0f, 5f, 10f)));
 
             Assert.That(marker.IsVisible, Is.True);
-            AssertApproximately(new Vector2(0f, k_CompassMarkerHeight), LocalPosition(marker));
+            AssertApproximately(new Vector2(0f, k_CenteredCompassMarkerY), LocalPosition(marker));
+            AssertInside(_compassViewport, marker, k_CompassPadding, 0f);
+        }
+
+        [Test]
+        public void Compass_MarkerTallerThanTheViewport_OverflowsEquallyAboveAndBelow()
+        {
+            _compassViewport.sizeDelta = new Vector2(900f, 40f);
+
+            POI_Marker marker = Place(_compass, CreatePoint(new Vector3(0f, 0f, 10f)));
+
+            Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(_compassViewport, marker.transform);
+            float overflowAbove = bounds.max.y - _compassViewport.rect.yMax;
+            float overflowBelow = _compassViewport.rect.yMin - bounds.min.y;
+            Assert.That(overflowAbove, Is.EqualTo(overflowBelow).Within(0.01f));
         }
 
         [Test]

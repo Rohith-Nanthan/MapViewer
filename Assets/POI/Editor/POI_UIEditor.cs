@@ -4,13 +4,8 @@ using UnityEngine.UI;
 
 namespace POI
 {
-    /// <summary>
-    /// Inspector for <see cref="POI_UI"/>: the camera, player and resolution manager, then the Screen and Compass
-    /// sections laid out open, with checks for common setup mistakes. In Play Mode it also shows how many markers
-    /// each section is showing.
-    /// </summary>
     [CustomEditor(typeof(POI_UI))]
-    sealed class POI_UIEditor : Editor
+    sealed class POI_UIEditor : UnityEditor.Editor
     {
         SerializedProperty _camera;
         SerializedProperty _player;
@@ -65,23 +60,23 @@ namespace POI
             for (bool enterChildren = true; field.NextVisible(enterChildren) && !SerializedProperty.EqualContents(field, end); enterChildren = false)
                 EditorGUILayout.PropertyField(field, true);
 
-            DrawSectionChecks(title, section);
+            DrawSetupWarnings(title, section);
         }
 
-        static void DrawSectionChecks(string title, SerializedProperty section)
+        static void DrawSetupWarnings(string title, SerializedProperty section)
         {
             var viewport = (RectTransform)section.FindPropertyRelative("m_Viewport").objectReferenceValue;
-            var template = (POI_Marker)section.FindPropertyRelative("m_Template").objectReferenceValue;
+            var markerPrefab = (POI_Marker)section.FindPropertyRelative("m_MarkerPrefab").objectReferenceValue;
 
-            if (viewport == null && template == null)
+            if (viewport == null && markerPrefab == null)
             {
-                EditorGUILayout.HelpBox($"Assign a Viewport and a Template to show {title.ToLowerInvariant()} markers, " +
+                EditorGUILayout.HelpBox($"Assign a Viewport and a Marker Prefab to show {title.ToLowerInvariant()} markers, " +
                                         "or leave both empty to skip them.", MessageType.Info);
                 return;
             }
 
-            if (viewport == null || template == null)
-                EditorGUILayout.HelpBox($"Assign the {(viewport == null ? "Viewport" : "Template")} too.", MessageType.Warning);
+            if (viewport == null || markerPrefab == null)
+                EditorGUILayout.HelpBox($"Assign the {(viewport == null ? "Viewport" : "Marker Prefab")} too.", MessageType.Warning);
 
             if (viewport != null && viewport.GetComponentInParent<Canvas>(true) == null)
                 EditorGUILayout.HelpBox("The Viewport must be inside a Canvas.", MessageType.Error);
@@ -89,8 +84,11 @@ namespace POI
             if (viewport != null && viewport.GetComponent<LayoutGroup>() != null)
                 EditorGUILayout.HelpBox("Remove the layout group from the Viewport; it would fight the markers for their positions.", MessageType.Warning);
 
-            if (template != null && template.IconImage == null)
-                EditorGUILayout.HelpBox("The Template's POI Marker has no Icon image assigned.", MessageType.Warning);
+            if (markerPrefab != null && !EditorUtility.IsPersistent(markerPrefab))
+                EditorGUILayout.HelpBox("Assign a prefab asset as the Marker Prefab. A scene object would stay visible next to its copies.", MessageType.Warning);
+
+            if (markerPrefab != null && markerPrefab.IconImage == null)
+                EditorGUILayout.HelpBox("The Marker Prefab's POI Marker has no Icon Image assigned.", MessageType.Warning);
 
             if (!POI_Marker.IsValidDistanceFormat(section.FindPropertyRelative("m_DistanceFormat").stringValue))
                 EditorGUILayout.HelpBox("Distance Format is not a valid format with {0}; distances will show as plain numbers.", MessageType.Warning);

@@ -486,6 +486,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: POI.Samples::POI.Samples.CompassHeadingExample
   m_UI: {fileID: 7531701810618595914}
+  m_CompassBar: {fileID: 7531701810618595913}
   m_DirectionTemplate: {fileID: 1112594070}
   m_NorthColor: {r: 1, g: 0.45, b: 0.35, a: 1}
 --- !u!114 &279078177

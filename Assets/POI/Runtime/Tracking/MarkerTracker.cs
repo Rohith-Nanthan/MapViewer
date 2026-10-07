@@ -4,48 +4,40 @@ using UnityEngine;
 
 namespace POI
 {
-    /// <summary>
-    /// Base for trackers that show a copy of a marker template per point of interest inside a viewport. It owns
-    /// the markers and their layout; subclasses only decide where each marker goes.
-    /// </summary>
     public abstract class MarkerTracker : IDisposable
     {
-        readonly MarkerSet _markers = new MarkerSet();
-
-        // Points added before the viewport and template are assigned; their markers are made once they are.
+        // Points waiting for a viewport and marker prefab, or for a respawn after either changed.
         readonly List<IPointOfInterest> _pending = new List<IPointOfInterest>();
+        MarkerSpawner _spawner;
         bool _isLayoutDirty = true;
 
-        /// <summary>Rectangle the markers move within, or null while it is not set up.</summary>
         protected abstract RectTransform Viewport { get; }
 
-        /// <summary>Marker copied for each point of interest, or null while it is not set up.</summary>
-        protected abstract POI_Marker Template { get; }
+        protected abstract POI_Marker MarkerPrefab { get; }
 
-        /// <summary>The markers, one per point of interest.</summary>
-        protected MarkerSet Markers => _markers;
+        protected MarkerSpawner Markers => _spawner;
 
-        /// <summary>Bounds of a marker around its pivot, children included, in the viewport's units.</summary>
         protected Rect MarkerBounds { get; private set; }
 
-        /// <summary>Camera that renders the viewport's canvas, or null for Screen Space - Overlay.</summary>
         protected Camera CanvasCamera { get; private set; }
 
-        /// <summary>Number of points of interest that have a marker.</summary>
-        public int MarkerCount => _markers.Count;
+        public int MarkerCount => _spawner != null ? _spawner.Count : 0;
 
-        /// <summary>Whether both the viewport and the template are assigned.</summary>
-        public bool IsConfigured => Viewport != null && Template != null;
+        public bool IsConfigured => Viewport != null && MarkerPrefab != null;
 
-        public bool TryGetMarker(IPointOfInterest poi, out POI_Marker marker) => _markers.TryGet(poi, out marker);
+        public bool TryGetMarker(IPointOfInterest poi, out POI_Marker marker)
+        {
+            marker = null;
+            return _spawner != null && _spawner.TryGet(poi, out marker);
+        }
 
         public void Add(IPointOfInterest poi)
         {
             if (poi == null)
                 throw new ArgumentNullException(nameof(poi));
 
-            if (IsConfigured)
-                _markers.Add(poi, Template, Viewport);
+            if (EnsureSpawnerMatchesSettings())
+                _spawner.GetOrSpawn(poi);
             else if (!_pending.Contains(poi))
                 _pending.Add(poi);
         }
@@ -53,64 +45,86 @@ namespace POI
         public void Remove(IPointOfInterest poi)
         {
             _pending.Remove(poi);
-            _markers.Remove(poi);
+            _spawner?.Despawn(poi);
         }
 
         public void Clear()
         {
             _pending.Clear();
-            _markers.Clear();
+            _spawner?.DespawnAll();
         }
 
-        public void Hide() => _markers.HideAll();
+        public void Hide() => _spawner?.HideAll();
 
         public void RefreshLayout() => _isLayoutDirty = true;
 
         public void Dispose()
         {
             _pending.Clear();
-            _markers.Dispose();
+            DisposeSpawner();
         }
 
         public void Update(in POIViewContext context)
         {
-            if (!IsConfigured)
+            if (!EnsureSpawnerMatchesSettings())
                 return;
 
             if (_pending.Count > 0)
-                AddPending();
+                SpawnPending();
 
-            if (_markers.Count == 0)
+            if (_spawner.Count == 0)
                 return;
 
-            RectTransform viewport = Viewport;
-
             if (_isLayoutDirty)
-                ReadLayout(viewport);
+                ReadLayout();
 
-            PlaceMarkers(context, viewport);
+            PlaceMarkers(context, _spawner.Viewport);
         }
 
-        /// <summary>
-        /// Positions and shows every marker for this frame. <see cref="MarkerBounds"/> says how far each marker
-        /// reaches around the position it is given.
-        /// </summary>
         protected abstract void PlaceMarkers(in POIViewContext context, RectTransform viewport);
 
-        void AddPending()
+        // A changed viewport or marker prefab respawns every marker, so none is left under the old viewport.
+        bool EnsureSpawnerMatchesSettings()
+        {
+            RectTransform viewport = Viewport;
+            POI_Marker markerPrefab = MarkerPrefab;
+            bool isConfigured = viewport != null && markerPrefab != null;
+            if (_spawner != null && isConfigured && _spawner.Viewport == viewport && _spawner.Prefab == markerPrefab)
+                return true;
+
+            if (_spawner != null)
+            {
+                foreach (KeyValuePair<IPointOfInterest, POI_Marker> pair in _spawner)
+                {
+                    if (!_pending.Contains(pair.Key))
+                        _pending.Add(pair.Key);
+                }
+
+                DisposeSpawner();
+            }
+
+            if (!isConfigured)
+                return false;
+
+            _spawner = new MarkerSpawner(markerPrefab, viewport);
+            _isLayoutDirty = true;
+            return true;
+        }
+
+        void SpawnPending()
         {
             foreach (IPointOfInterest poi in _pending)
-                _markers.Add(poi, Template, Viewport);
+                _spawner.GetOrSpawn(poi);
             _pending.Clear();
         }
 
-        void ReadLayout(RectTransform viewport)
+        void ReadLayout()
         {
-            CanvasCamera = GetCanvasCamera(viewport);
+            CanvasCamera = GetCanvasCamera(_spawner.Viewport);
 
-            // Every marker is a copy of the same template, so one marker's size stands for all of them. A hidden
-            // marker has no size, so it is shown first; it is placed before anything is drawn.
-            foreach (KeyValuePair<IPointOfInterest, POI_Marker> pair in _markers)
+            // Every marker is a copy of one prefab, so one marker's size stands for all of them. A hidden marker has
+            // no size, so it is shown first; it is placed before anything is drawn.
+            foreach (KeyValuePair<IPointOfInterest, POI_Marker> pair in _spawner)
             {
                 POI_Marker marker = pair.Value;
                 if (marker == null)
@@ -121,6 +135,12 @@ namespace POI
                 _isLayoutDirty = false;
                 return;
             }
+        }
+
+        void DisposeSpawner()
+        {
+            _spawner?.Dispose();
+            _spawner = null;
         }
 
         // Screen Space - Overlay canvases have no camera, which RectTransformUtility expects as null.

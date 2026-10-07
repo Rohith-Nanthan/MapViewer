@@ -4,11 +4,6 @@ using UnityEngine;
 
 namespace POI
 {
-    /// <summary>
-    /// Places a marker over each point of interest's position on screen, inside the viewport of its
-    /// <see cref="ScreenMarkerSettings"/>. A point out of view, behind the camera included, hugs the viewport's
-    /// edge in its direction. Markers, children included, always stay fully inside, the padding away from the edges.
-    /// </summary>
     public sealed class ScreenMarkerTracker : MarkerTracker
     {
         ScreenMarkerSettings _settings;
@@ -21,20 +16,12 @@ namespace POI
         public ScreenMarkerSettings Settings
         {
             get => _settings;
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-
-                if (value != _settings)
-                    MarkerSet.HideTemplate(value.Template);
-                _settings = value;
-            }
+            set => _settings = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         protected override RectTransform Viewport => _settings.Viewport;
 
-        protected override POI_Marker Template => _settings.Template;
+        protected override POI_Marker MarkerPrefab => _settings.MarkerPrefab;
 
         protected override void PlaceMarkers(in POIViewContext context, RectTransform viewport)
         {
@@ -47,14 +34,14 @@ namespace POI
                 if (marker == null)
                     continue;
 
-                Vector2 screenTarget = POIMath.ProjectToScreen(context.Camera, poi.Position);
-                if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(viewport, screenTarget, CanvasCamera, out Vector2 localTarget))
+                Vector2 screenPoint = POIMath.ProjectToScreen(context.Camera, poi.Position);
+                if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(viewport, screenPoint, CanvasCamera, out Vector2 localPoint))
                 {
                     marker.SetVisible(false);
                     continue;
                 }
 
-                marker.SetLocalPosition(POIMath.ClampTowardCenter(allowedPivotArea, localTarget));
+                marker.SetLocalPosition(POIMath.ClampTowardCenter(allowedPivotArea, localPoint));
                 marker.SetIcon(poi.Icon);
                 marker.SetDistance(Vector3.Distance(context.PlayerPosition, poi.Position), _settings.DistanceFormat);
                 marker.SetVisible(true);

@@ -4,11 +4,6 @@ using UnityEngine;
 
 namespace POI
 {
-    /// <summary>
-    /// Slides a marker for each point of interest along the viewport of its <see cref="CompassMarkerSettings"/>,
-    /// by the point's bearing from where the camera faces, and shows the distance from the player in the marker's
-    /// label. Only the horizontal position follows the camera; markers keep their template's height.
-    /// </summary>
     public sealed class CompassMarkerTracker : MarkerTracker
     {
         CompassMarkerSettings _settings;
@@ -21,20 +16,12 @@ namespace POI
         public CompassMarkerSettings Settings
         {
             get => _settings;
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-
-                if (value != _settings)
-                    MarkerSet.HideTemplate(value.Template);
-                _settings = value;
-            }
+            set => _settings = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         protected override RectTransform Viewport => _settings.Viewport;
 
-        protected override POI_Marker Template => _settings.Template;
+        protected override POI_Marker MarkerPrefab => _settings.MarkerPrefab;
 
         protected override void PlaceMarkers(in POIViewContext context, RectTransform viewport)
         {
@@ -42,6 +29,9 @@ namespace POI
             float padding = _settings.Padding;
             Rect allowedPivotArea = POIMath.GetAllowedPivotArea(area, MarkerBounds, new EdgePadding(padding, padding, 0f, 0f));
             Vector3 heading = POIMath.GetHeading(context.CameraForward, context.CameraUp, Vector3.up);
+
+            // The marker and its label are centered vertically as one block.
+            float y = allowedPivotArea.center.y;
 
             foreach (KeyValuePair<IPointOfInterest, POI_Marker> pair in Markers)
             {
@@ -53,11 +43,7 @@ namespace POI
                 float bearing = POIMath.GetBearing(heading, poi.Position - context.CameraPosition, Vector3.up);
                 float x = area.center.x + POIMath.BearingToOffset(bearing, _settings.DegreesAcrossViewport, area.width);
 
-                // The height comes from the template; it is only clamped so the marker is never cut off.
-                float y = marker.RectTransform.localPosition.y;
-                marker.SetLocalPosition(new Vector2(
-                    Mathf.Clamp(x, allowedPivotArea.xMin, allowedPivotArea.xMax),
-                    Mathf.Clamp(y, allowedPivotArea.yMin, allowedPivotArea.yMax)));
+                marker.SetLocalPosition(new Vector2(Mathf.Clamp(x, allowedPivotArea.xMin, allowedPivotArea.xMax), y));
                 marker.SetIcon(poi.Icon);
                 marker.SetDistance(Vector3.Distance(context.PlayerPosition, poi.Position), _settings.DistanceFormat);
                 marker.SetVisible(true);

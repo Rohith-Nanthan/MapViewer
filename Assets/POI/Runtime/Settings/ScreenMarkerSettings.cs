@@ -3,18 +3,14 @@ using UnityEngine;
 
 namespace POI
 {
-    /// <summary>
-    /// Where screen markers are shown, set in the Screen section of <see cref="POI_UI"/>. A marker sits over its
-    /// point of interest while it is in view, and hugs the viewport's edge on the point's side while it is not.
-    /// </summary>
     [Serializable]
     public sealed class ScreenMarkerSettings
     {
-        [Tooltip("Rectangle the markers move within, e.g. the screen's safe area. Markers are created as its children.")]
+        [Tooltip("Rectangle the markers move within, e.g. the screen's safe area. Markers are spawned as its children.")]
         [SerializeField] RectTransform m_Viewport;
 
-        [Tooltip("Marker copied for each point of interest. Its size, children included, always stays inside the viewport.")]
-        [SerializeField] POI_Marker m_Template;
+        [Tooltip("Prefab spawned for each point of interest. Its size, children included, always stays inside the viewport.")]
+        [SerializeField] POI_Marker m_MarkerPrefab;
 
         [Tooltip("Space kept between the markers and each edge of the viewport, in canvas units.")]
         [SerializeField] EdgePadding m_Padding = new EdgePadding(16f);
@@ -26,10 +22,10 @@ namespace POI
         {
         }
 
-        public ScreenMarkerSettings(RectTransform viewport, POI_Marker template)
+        public ScreenMarkerSettings(RectTransform viewport, POI_Marker markerPrefab)
         {
             m_Viewport = viewport;
-            m_Template = template;
+            m_MarkerPrefab = markerPrefab;
         }
 
         public RectTransform Viewport
@@ -38,10 +34,10 @@ namespace POI
             set => m_Viewport = value;
         }
 
-        public POI_Marker Template
+        public POI_Marker MarkerPrefab
         {
-            get => m_Template;
-            set => m_Template = value;
+            get => m_MarkerPrefab;
+            set => m_MarkerPrefab = value;
         }
 
         public EdgePadding Padding
